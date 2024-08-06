@@ -1,5 +1,31 @@
-.PHONY: test
-test: # run test for iteration
+LOCAL_BIN:=$(CURDIR)/bin
+
+.PHONY: install_bin
+install_bin: # install binary dependencies
+	mkdir -p $(LOCAL_BIN)
+	GOBIN=$(LOCAL_BIN) go mod tidy
+	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v2@latest
+
+.PHONY: install
+install: install_bin
+
+.PHONY:
+mockery:
+	$(LOCAL_BIN)/mockery --name $(name) --dir $(dir) --output $(dir)/mocks
+
+.PHONY:
+mock:
+	make mockery name=Usecases dir=./internal/handlers
+
+	make mockery name=URLStorage dir=./internal/usecases
+	make mockery name=IDGenerator dir=./internal/usecases
+
+.PHONY: tests
+tests: # run unit tests
+	go test -race -coverprofile=coverage.out ./...
+
+.PHONY: test-iter
+test-iter: # run test for iteration
 	if [ ${NUMBER} -ge 1 ]; then shortenertest -test.v -test.run=^TestIteration1$$ -binary-path=cmd/shortener/shortener; fi; \
 	if [ ${NUMBER} -ge 2 ]; then shortenertest -test.v -test.run=^TestIteration2$$ -binary-path=cmd/shortener/shortener; fi; \
 	if [ ${NUMBER} -ge 3 ]; then shortenertest -test.v -test.run=^TestIteratio3$$ -binary-path=cmd/shortener/shortener; fi; \
@@ -20,5 +46,5 @@ test: # run test for iteration
 	if [ ${NUMBER} -ge 18 ]; then shortenertest -test.v -test.run=^TestIteration18$$ -binary-path=cmd/shortener/shortener; fi
 
 .PHONY: test-all
-test-all: # run test for iteration
+test-all: # run test for all iterations
 	shortenertest -test.v -test.run=^TestIteration -binary-path=cmd/shortener/shortener
