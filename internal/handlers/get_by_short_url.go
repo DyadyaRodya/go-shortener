@@ -1,26 +1,18 @@
 package handlers
 
 import (
-	"encoding/hex"
+	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 	"net/http"
-	"strings"
 )
 
 func (h *Handlers) GetByShortURL(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	getShortURLData, errorResponse := dto.GetShortURLDataFromRequest(r)
+	if errorResponse != nil {
+		w.WriteHeader(errorResponse.Code)
 		return
 	}
 
-	id := strings.TrimPrefix(r.URL.Path, "/")
-
-	_, err := hex.DecodeString(id)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	shortURL, err := h.Usecases.GetShortURL(id)
+	shortURL, err := h.Usecases.GetShortURL(getShortURLData.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
