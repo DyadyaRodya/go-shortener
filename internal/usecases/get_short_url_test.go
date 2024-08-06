@@ -7,7 +7,7 @@ import (
 
 func (u *usecasesSuite) TestUsecases_GetShortURL_Success() {
 	id := "teststring"
-	shortURL := &entity.ShortURL{id, "http://test.url/blabla"}
+	shortURL := &entity.ShortURL{ID: id, URL: "http://test.url/blabla"}
 
 	u.urlStorage.EXPECT().GetURLByID(id).Return(shortURL, nil).Once()
 
