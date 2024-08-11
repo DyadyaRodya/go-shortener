@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
-	"log"
-	"net/http"
 )
 
 type (
@@ -27,17 +25,4 @@ func NewHandlers(usecases Usecases, config *Config) *Handlers {
 		Usecases: usecases,
 		Config:   config,
 	}
-}
-
-func (h *Handlers) RootHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Request at", r.Method, r.URL.Path, r.RemoteAddr, r.UserAgent())
-	switch r.Method {
-	case http.MethodGet:
-		h.GetByShortURL(w, r)
-	case http.MethodPost:
-		h.CreateShortURL(w, r)
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	}
-	log.Println("Response at", r.Method, r.URL.Path, r.RemoteAddr, r.UserAgent())
 }

@@ -2,14 +2,16 @@ package app
 
 import (
 	"github.com/DyadyaRodya/go-shortener/internal/handlers"
-	"net/http"
+	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
+	"github.com/labstack/echo/v4"
 )
 
 const (
 	rootURL = "/"
-	// idURL   = "/{id}"
+	idURL   = "/:" + dto.IDParamName
 )
 
-func setupRoutes(mux *http.ServeMux, handlers *handlers.Handlers) {
-	mux.HandleFunc(rootURL, handlers.RootHandler)
+func setupRoutes(e *echo.Echo, handlers *handlers.Handlers) {
+	e.GET(idURL, handlers.GetByShortURL)
+	e.POST(rootURL, handlers.CreateShortURL)
 }

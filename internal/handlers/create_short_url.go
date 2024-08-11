@@ -2,35 +2,26 @@ package handlers
 
 import (
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/url"
 )
 
-func (h *Handlers) CreateShortURL(w http.ResponseWriter, r *http.Request) {
-	createShortURLData, errorResponse := dto.CreateShortURLDataFromRequest(r)
+func (h *Handlers) CreateShortURL(c echo.Context) error {
+	createShortURLData, errorResponse := dto.CreateShortURLDataFromContext(c)
 	if errorResponse != nil {
-		w.WriteHeader(errorResponse.Code)
-		return
+		return c.NoContent(errorResponse.Code)
 	}
 
 	shortURL, err := h.Usecases.CreateShortURL(createShortURLData.URL)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(err.Error()))
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
 	fullShortURL, err := url.JoinPath(h.Config.BaseShortURL, shortURL.ID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(fullShortURL))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	return c.String(http.StatusCreated, fullShortURL)
 }

@@ -1,8 +1,8 @@
 package dto
 
 import (
+	"github.com/labstack/echo/v4"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 )
@@ -11,11 +11,8 @@ type CreateShortURLData struct {
 	URL string
 }
 
-func CreateShortURLDataFromRequest(r *http.Request) (*CreateShortURLData, *ErrorResponse) {
-	if r.Method != http.MethodPost {
-		return nil, ErrMethodNotAllowed
-	}
-
+func CreateShortURLDataFromContext(c echo.Context) (*CreateShortURLData, *ErrorResponse) {
+	r := c.Request()
 	if contentType := r.Header.Get("Content-Type"); !strings.Contains(contentType, "text/plain") {
 		return nil, ErrContentType
 	}
