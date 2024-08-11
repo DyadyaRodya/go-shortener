@@ -2,22 +2,21 @@ package handlers
 
 import (
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
+	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
-func (h *Handlers) GetByShortURL(w http.ResponseWriter, r *http.Request) {
-	getShortURLData, errorResponse := dto.GetShortURLDataFromRequest(r)
+func (h *Handlers) GetByShortURL(c echo.Context) error {
+	getShortURLData, errorResponse := dto.GetShortURLDataFromContext(c)
 	if errorResponse != nil {
-		w.WriteHeader(errorResponse.Code)
-		return
+		return c.NoContent(errorResponse.Code)
 	}
 
 	shortURL, err := h.Usecases.GetShortURL(getShortURLData.ID)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return c.NoContent(http.StatusBadRequest)
 	}
 
-	w.Header().Set("Location", shortURL.URL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	c.Response().Header().Set("Location", shortURL.URL)
+	return c.NoContent(http.StatusTemporaryRedirect)
 }

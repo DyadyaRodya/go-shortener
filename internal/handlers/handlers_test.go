@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	handlersMocks "github.com/DyadyaRodya/go-shortener/internal/handlers/mocks"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 	"io"
 	"net/http"
@@ -95,16 +96,20 @@ func (h *handlersSuite) TestGetShortURL() {
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 
-			h.handlers.RootHandler(w, test.request) // want to protect API so root handler for now
+			e := echo.New()
+			c := e.NewContext(test.request, w)
+			c.SetPath(":id")
+			c.SetParamNames("id")
+			c.SetParamValues(test.usecaseParam)
 
-			res := w.Result()
-			defer res.Body.Close()
-			// проверяем код ответа
-			h.Equal(test.want.code, res.StatusCode)
+			if h.NoError(h.handlers.GetByShortURL(c)) {
+				// проверяем код ответа
+				h.Equal(test.want.code, w.Code)
 
-			if test.want.headers != nil { // получаем и проверяем заголовки запроса
-				for k, v := range test.want.headers {
-					h.Equal(res.Header.Get(k), v)
+				if test.want.headers != nil { // получаем и проверяем заголовки запроса
+					for k, v := range test.want.headers {
+						h.Equal(w.Header().Get(k), v)
+					}
 				}
 			}
 		})
@@ -143,7 +148,7 @@ func (h *handlersSuite) TestCreateShortURL() {
 			want: want{
 				code:        http.StatusCreated,
 				response:    h.config.BaseShortURL + "/10abcdef",
-				contentType: "text/plain",
+				contentType: "text/plain; charset=UTF-8",
 			},
 		},
 		{
@@ -176,49 +181,21 @@ func (h *handlersSuite) TestCreateShortURL() {
 			w := httptest.NewRecorder()
 
 			test.request.Header.Set("Content-Type", test.contentType)
-			h.handlers.RootHandler(w, test.request) // want to protect API so root handler for now
+			e := echo.New()
+			c := e.NewContext(test.request, w)
 
-			res := w.Result()
-			defer res.Body.Close()
-			// проверяем код ответа
-			h.Equal(test.want.code, res.StatusCode)
+			if h.NoError(h.handlers.CreateShortURL(c)) {
+				// проверяем код ответа
+				h.Equal(test.want.code, w.Code)
 
-			if test.want.response != "" { // получаем и проверяем заголовки запроса
-				resBody, err := io.ReadAll(res.Body)
+				if test.want.response != "" { // получаем и проверяем заголовки запроса
+					resBody, err := io.ReadAll(w.Body)
 
-				h.Require().NoError(err)
-				h.Equal(test.want.response, string(resBody))
-				h.Equal(test.want.contentType, res.Header.Get("Content-Type"))
+					h.Require().NoError(err)
+					h.Equal(test.want.response, string(resBody))
+					h.Equal(test.want.contentType, w.Header().Get("Content-Type"))
+				}
 			}
-
-		})
-	}
-}
-
-func (h *handlersSuite) TestRootHandler_MethodNotAllowed() {
-	methods := []string{
-		http.MethodDelete,
-		http.MethodPut,
-		http.MethodHead,
-		http.MethodPatch,
-		http.MethodConnect,
-		http.MethodOptions,
-		http.MethodTrace,
-	}
-
-	for _, method := range methods {
-		h.Run(method, func() {
-			// создаём новый Recorder
-			w := httptest.NewRecorder()
-
-			// создаем новый Request
-			r := httptest.NewRequest(method, "/", nil)
-
-			h.handlers.RootHandler(w, r)
-			res := w.Result()
-			defer res.Body.Close()
-
-			h.Equal(http.StatusMethodNotAllowed, res.StatusCode)
 		})
 	}
 }

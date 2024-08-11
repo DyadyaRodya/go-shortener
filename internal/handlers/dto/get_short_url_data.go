@@ -2,20 +2,17 @@ package dto
 
 import (
 	"encoding/hex"
-	"net/http"
-	"strings"
+	"github.com/labstack/echo/v4"
 )
+
+const IDParamName = "id"
 
 type GetShortURLData struct {
 	ID string
 }
 
-func GetShortURLDataFromRequest(r *http.Request) (*GetShortURLData, *ErrorResponse) {
-	if r.Method != http.MethodGet {
-		return nil, ErrMethodNotAllowed
-	}
-
-	id := strings.TrimPrefix(r.URL.Path, "/")
+func GetShortURLDataFromContext(c echo.Context) (*GetShortURLData, *ErrorResponse) {
+	id := c.Param(IDParamName)
 
 	_, err := hex.DecodeString(id)
 	if err != nil {
