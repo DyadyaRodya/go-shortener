@@ -16,7 +16,7 @@ type App struct {
 	e         *echo.Echo
 }
 
-func NewApp(BaseShortURL, ServerAddress string) *App {
+func NewApp(DefaultBaseShortURL, DefaultServerAddress string) *App {
 	log.SetFlags(log.Ldate | log.Ltime)
 
 	// init Echo
@@ -27,11 +27,8 @@ func NewApp(BaseShortURL, ServerAddress string) *App {
 	e.Use(middleware.Recover())
 
 	// init configs
-	handlersConfig := &handlers.Config{
-		BaseShortURL: BaseShortURL,
-	}
-	appConfig := config.NewConfig(handlersConfig, ServerAddress)
-	log.Printf("%+v\n", *handlersConfig)
+	appConfig := config.InitConfigFromCMD(DefaultServerAddress, DefaultBaseShortURL)
+	log.Printf("%+v\n", *appConfig.HandlersConfig)
 
 	// init services
 	idGenerator := services.NewIDGenerator()
