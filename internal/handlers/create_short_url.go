@@ -1,39 +1,19 @@
 package handlers
 
 import (
-	"io"
+	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 func (h *Handlers) CreateShortURL(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	createShortURLData, errorResponse := dto.CreateShortURLDataFromRequest(r)
+	if errorResponse != nil {
+		w.WriteHeader(errorResponse.Code)
 		return
 	}
 
-	if contentType := r.Header.Get("Content-Type"); !strings.Contains(contentType, "text/plain") {
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-		return
-	}
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-	}
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
-	sourceURL := strings.TrimSpace(string(body))
-	_, err = url.ParseRequestURI(sourceURL)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	shortURL, err := h.Usecases.CreateShortURL(sourceURL)
+	shortURL, err := h.Usecases.CreateShortURL(createShortURLData.URL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(err.Error()))

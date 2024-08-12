@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/DyadyaRodya/go-shortener/internal/config"
+	"github.com/DyadyaRodya/go-shortener/internal/domain/services"
 	"github.com/DyadyaRodya/go-shortener/internal/handlers"
 	"github.com/DyadyaRodya/go-shortener/internal/repositories/inmemory"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
@@ -25,8 +26,9 @@ func NewApp(BaseShortURL, ServerAddress string) *App {
 	appConfig := config.NewConfig(handlersConfig, ServerAddress)
 	log.Printf("%+v\n", *handlersConfig)
 
+	idGenerator := services.NewIDGenerator()
 	store := inmemory.NewStoreInMemory()
-	u := usecases.NewUsecases(store)
+	u := usecases.NewUsecases(store, idGenerator)
 	h := handlers.NewHandlers(u, appConfig.HandlersConfig)
 
 	setupRoutes(mux, h)

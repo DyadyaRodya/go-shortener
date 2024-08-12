@@ -3,14 +3,13 @@ package usecases
 import (
 	"errors"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
-	"github.com/DyadyaRodya/go-shortener/internal/domain/services"
 )
 
 func (u *Usecases) CreateShortURL(url string) (*entity.ShortURL, error) {
 	var id string
 	var err error
 	for {
-		id, err = services.GenerateID()
+		id, err = u.idGenerator.Generate()
 		if err != nil {
 			return nil, err
 		}
