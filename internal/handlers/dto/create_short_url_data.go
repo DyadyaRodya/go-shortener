@@ -1,17 +1,18 @@
 package dto
 
 import (
+	"encoding/json"
 	"github.com/labstack/echo/v4"
 	"io"
 	"net/url"
 	"strings"
 )
 
-type CreateShortURLData struct {
-	URL string
+type CreateShortURLDataRequest struct {
+	URL string `json:"url"`
 }
 
-func CreateShortURLDataFromContext(c echo.Context) (*CreateShortURLData, *ErrorResponse) {
+func CreateShortURLDataFromContext(c echo.Context) (*CreateShortURLDataRequest, *ErrorResponse) {
 	r := c.Request()
 	if contentType := r.Header.Get("Content-Type"); !strings.Contains(contentType, "text/plain") {
 		return nil, ErrContentType
@@ -31,5 +32,28 @@ func CreateShortURLDataFromContext(c echo.Context) (*CreateShortURLData, *ErrorR
 		return nil, ErrInvalidData
 	}
 
-	return &CreateShortURLData{URL: sourceURL}, nil
+	return &CreateShortURLDataRequest{URL: sourceURL}, nil
+}
+
+func CreateShortURLDataFromJSONContext(c echo.Context) (*CreateShortURLDataRequest, *ErrorResponse) {
+	data := &CreateShortURLDataRequest{}
+
+	r := c.Request()
+	if err := json.NewDecoder(r.Body).Decode(data); err != nil {
+		return nil, ErrBadData
+	}
+
+	if _, err := url.ParseRequestURI(data.URL); err != nil {
+		return nil, ErrInvalidData
+	}
+
+	return data, nil
+}
+
+type CreateShortURLDataResponse struct {
+	Result string `json:"result"`
+}
+
+func NewCreateShortURLDataResponse(URL string) *CreateShortURLDataResponse {
+	return &CreateShortURLDataResponse{Result: URL}
 }

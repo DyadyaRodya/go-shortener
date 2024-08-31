@@ -92,3 +92,87 @@ func (h *handlersSuite) TestCreateShortURL() {
 		})
 	}
 }
+
+func (h *handlersSuite) TestCreateShortURLJSON() {
+	type usecaseResult struct {
+		shortURL *entity.ShortURL
+		err      error
+	}
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name         string
+		request      *http.Request
+		contentType  string
+		usecaseParam string
+		usecaseRes   *usecaseResult
+		want         want
+	}{
+		{
+			name:         "Success",
+			request:      httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(`{"url":"http://full.url.com/test"}`)),
+			contentType:  "application/json; charset=utf-8",
+			usecaseParam: "http://full.url.com/test",
+			usecaseRes: &usecaseResult{
+				shortURL: &entity.ShortURL{
+					ID:  "10abcdef",
+					URL: "http://full.url.com/test",
+				},
+			},
+			want: want{
+				code:        http.StatusCreated,
+				response:    `{"result":"` + h.config.BaseShortURL + "/10abcdef" + `"}`,
+				contentType: "application/json",
+			},
+		},
+		{
+			name:        "Bad_url",
+			request:     httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(`{"url":"bad-url"}`)),
+			contentType: "application/json; charset=utf-8",
+			want: want{
+				code:     http.StatusBadRequest,
+				response: "",
+			},
+		},
+		{
+			name:        "Not_json",
+			request:     httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader("http://full.url.com/test")),
+			contentType: "text/plain",
+			want: want{
+				code:     http.StatusBadRequest,
+				response: "",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		h.Run(test.name, func() {
+			if test.usecaseParam != "" && test.usecaseRes != nil {
+				h.usecases.EXPECT().CreateShortURL(test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
+			}
+
+			// создаём новый Recorder
+			w := httptest.NewRecorder()
+
+			test.request.Header.Set("Content-Type", test.contentType)
+			e := echo.New()
+			c := e.NewContext(test.request, w)
+
+			if h.NoError(h.handlers.CreateShortURLJSON(c)) {
+				// проверяем код ответа
+				h.Equal(test.want.code, w.Code)
+
+				if test.want.response != "" { // получаем и проверяем заголовки запроса
+					resBody, err := io.ReadAll(w.Body)
+
+					h.Require().NoError(err)
+					h.JSONEq(test.want.response, string(resBody))
+					h.Equal(test.want.contentType, w.Header().Get("Content-Type"))
+				}
+			}
+		})
+	}
+}

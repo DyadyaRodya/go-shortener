@@ -25,3 +25,22 @@ func (h *Handlers) CreateShortURL(c echo.Context) error {
 
 	return c.String(http.StatusCreated, fullShortURL)
 }
+
+func (h *Handlers) CreateShortURLJSON(c echo.Context) error {
+	createShortURLData, errorResponse := dto.CreateShortURLDataFromJSONContext(c)
+	if errorResponse != nil {
+		return c.NoContent(errorResponse.Code)
+	}
+
+	shortURL, err := h.Usecases.CreateShortURL(createShortURLData.URL)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	fullShortURL, err := url.JoinPath(h.Config.BaseShortURL, shortURL.ID)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+	response := dto.NewCreateShortURLDataResponse(fullShortURL)
+	return c.JSON(http.StatusCreated, response)
+}
