@@ -12,14 +12,32 @@
 
 ### Локальный запуск автотестов
 
-Установить `shortenertest` [отсюда](https://github.com/Yandex-Practicum/go-autotests?tab=readme-ov-file#%D1%82%D1%80%D0%B5%D0%BA-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81-%D1%81%D0%BE%D0%BA%D1%80%D0%B0%D1%89%D0%B5%D0%BD%D0%B8%D1%8F-url)
+Установить `shortenertestbeta` [отсюда](https://github.com/Yandex-Practicum/go-autotests?tab=readme-ov-file#%D1%82%D1%80%D0%B5%D0%BA-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81-%D1%81%D0%BE%D0%BA%D1%80%D0%B0%D1%89%D0%B5%D0%BD%D0%B8%D1%8F-url)
+Установить `statictest` [отсюда](https://github.com/Yandex-Practicum/go-autotests?tab=readme-ov-file#%D1%82%D1%80%D0%B5%D0%BA-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81-%D1%81%D0%BE%D0%BA%D1%80%D0%B0%D1%89%D0%B5%D0%BD%D0%B8%D1%8F-url)
+
+Для статического теста
+```shell
+make lint
+```
 
 Для конкретной итерации выполняем 
 ```shell
-make test NUMBER=${ITER_NUMBER}
+make test-iter NUMBER=${ITER_NUMBER}
 ```
 
 Для запуска всех тестов выполняем
 ```shell
 make test-all
+```
+
+### Дополнительные команды
+
+Для генерации моков
+```shell
+make mock
+```
+
+Для запуска unit тестов выполняем
+```shell
+make tests
 ```
