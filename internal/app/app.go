@@ -39,6 +39,7 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel string) *
 
 	// Middleware
 	e.Use(loggerMW)
+	e.Use(NewGZIPMiddleware())
 	e.Use(middleware.Recover())
 
 	// init services

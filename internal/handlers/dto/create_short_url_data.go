@@ -14,9 +14,6 @@ type CreateShortURLDataRequest struct {
 
 func CreateShortURLDataFromContext(c echo.Context) (*CreateShortURLDataRequest, *ErrorResponse) {
 	r := c.Request()
-	if contentType := r.Header.Get("Content-Type"); !strings.Contains(contentType, "text/plain") {
-		return nil, ErrContentType
-	}
 
 	defer func() {
 		_ = r.Body.Close()

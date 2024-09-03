@@ -58,7 +58,7 @@ func (h *handlersSuite) TestCreateShortURL() {
 			request:     httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{\"url\": \"http://full.url.com/test\"}")),
 			contentType: "application/json",
 			want: want{
-				code:     http.StatusUnsupportedMediaType,
+				code:     http.StatusBadRequest,
 				response: "",
 			},
 		},
