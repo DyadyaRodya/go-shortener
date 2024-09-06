@@ -7,11 +7,13 @@ import (
 )
 
 const (
-	rootURL = "/"
-	idURL   = "/:" + dto.IDParamName
+	rootURL       = "/"
+	apiShortenURL = "/api/shorten"
+	idURL         = "/:" + dto.IDParamName
 )
 
 func setupRoutes(e *echo.Echo, handlers *handlers.Handlers) {
 	e.GET(idURL, handlers.GetByShortURL)
 	e.POST(rootURL, handlers.CreateShortURL)
+	e.POST(apiShortenURL, handlers.CreateShortURLJSON)
 }

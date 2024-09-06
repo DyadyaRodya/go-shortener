@@ -2,6 +2,7 @@ package inmemory
 
 import (
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"maps"
 	"sync"
 )
 
@@ -15,6 +16,10 @@ func NewStoreInMemory() *StoreInMemory {
 		storage: make(map[string]string),
 		lock:    sync.RWMutex{},
 	}
+}
+
+func (s *StoreInMemory) Storage() *map[string]string {
+	return &s.storage
 }
 
 func (s *StoreInMemory) AddURL(ShortURL *entity.ShortURL) error {
@@ -38,4 +43,12 @@ func (s *StoreInMemory) GetURLByID(ID string) (*entity.ShortURL, error) {
 		URL: url,
 	}
 	return shortURL, nil
+}
+
+func (s *StoreInMemory) Load(src map[string]string) {
+	maps.Copy(s.storage, src)
+}
+
+func (s *StoreInMemory) Save(dst map[string]string) {
+	maps.Copy(dst, s.storage)
 }
