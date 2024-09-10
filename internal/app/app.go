@@ -9,7 +9,9 @@ import (
 	"github.com/DyadyaRodya/go-shortener/internal/handlers"
 	"github.com/DyadyaRodya/go-shortener/internal/logger"
 	"github.com/DyadyaRodya/go-shortener/internal/repositories/inmemory"
+	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
@@ -23,7 +25,7 @@ type App struct {
 	appConfig  *config.Config
 	e          *echo.Echo
 	appLogger  *zap.Logger
-	appStorage *inmemory.StoreInMemory
+	appStorage *usecases.URLStorage
 }
 
 func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultStorageFile string) *App {
@@ -53,8 +55,19 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	idGenerator := services.NewIDGenerator()
 
 	// init storage
-	store := inmemory.NewStoreInMemory()
+	var store usecases.URLStorage
+	if appConfig.DSN == "" {
+		s := inmemory.NewStoreInMemory()
+		store = s
+	} else {
+		pool, err := pgxpool.New(context.Background(), appConfig.DSN)
+		if err != nil {
+			appLogger.Fatal("Cannot create connection pool to database", zap.String("DSN", appConfig.DSN), zap.Error(err))
+		}
 
+		s := pgxrepo.NewStorePGX(pool)
+		store = s
+	}
 	// init usecases
 	u := usecases.NewUsecases(store, idGenerator)
 
@@ -68,7 +81,7 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 		appConfig:  appConfig,
 		e:          e,
 		appLogger:  appLogger,
-		appStorage: store,
+		appStorage: &store,
 	}
 }
 
@@ -93,42 +106,55 @@ func (a *App) Run() error {
 
 func (a *App) Shutdown(signal os.Signal) error {
 	a.appLogger.Info("Stopped server on signal", zap.String("signal", signal.String()))
-	file, err := os.OpenFile(a.appConfig.StorageFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		return nil
-	}
 
-	defer file.Close()
+	switch v := (*a.appStorage).(type) {
+	case *inmemory.StoreInMemory:
+		file, err := os.OpenFile(a.appConfig.StorageFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return nil
+		}
 
-	err = json.NewEncoder(file).Encode(a.appStorage.Storage())
-	if err != nil {
-		return err
+		defer file.Close()
+
+		err = json.NewEncoder(file).Encode(v.Storage())
+		if err != nil {
+			return err
+		}
+	default:
+
 	}
 
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelFunc()
-	err = a.e.Shutdown(ctx)
+	err := a.e.Shutdown(ctx)
 	return err
 }
 
 func (a *App) readInitData() error {
-	file, err := os.OpenFile(a.appConfig.StorageFile, os.O_RDONLY|os.O_CREATE, 0666)
-	if err != nil {
-		return err
+	switch v := (*a.appStorage).(type) {
+	case *inmemory.StoreInMemory:
+		file, err := os.OpenFile(a.appConfig.StorageFile, os.O_RDONLY|os.O_CREATE, 0666)
+		if err != nil {
+			return err
+		}
+
+		defer file.Close()
+
+		err = json.NewDecoder(file).Decode(v.Storage())
+		if err != nil && !errors.Is(err, io.EOF) {
+			return err
+		}
+
+		if err != nil {
+			a.appLogger.Info("Empty storage file")
+		} else {
+			a.appLogger.Info("Storage file successfully read")
+		}
+
+		return nil
+	default:
+		a.appLogger.Warn("Not using init file for current storage type")
+		return nil
+
 	}
-
-	defer file.Close()
-
-	err = json.NewDecoder(file).Decode(a.appStorage.Storage())
-	if err != nil && !errors.Is(err, io.EOF) {
-		return err
-	}
-
-	if err != nil {
-		a.appLogger.Info("Empty storage file")
-	} else {
-		a.appLogger.Info("Storage file successfully read")
-	}
-
-	return nil
 }

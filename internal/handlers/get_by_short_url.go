@@ -12,7 +12,8 @@ func (h *Handlers) GetByShortURL(c echo.Context) error {
 		return c.NoContent(errorResponse.Code)
 	}
 
-	shortURL, err := h.Usecases.GetShortURL(getShortURLData.ID)
+	ctx := c.Request().Context()
+	shortURL, err := h.Usecases.GetShortURL(ctx, getShortURLData.ID)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}

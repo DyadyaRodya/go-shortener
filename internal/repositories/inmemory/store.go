@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"context"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"maps"
 	"sync"
@@ -22,14 +23,14 @@ func (s *StoreInMemory) Storage() *map[string]string {
 	return &s.storage
 }
 
-func (s *StoreInMemory) AddURL(ShortURL *entity.ShortURL) error {
+func (s *StoreInMemory) AddURL(_ context.Context, ShortURL *entity.ShortURL) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.storage[ShortURL.ID] = ShortURL.URL
 	return nil
 }
 
-func (s *StoreInMemory) GetURLByID(ID string) (*entity.ShortURL, error) {
+func (s *StoreInMemory) GetURLByID(_ context.Context, ID string) (*entity.ShortURL, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -51,4 +52,8 @@ func (s *StoreInMemory) Load(src map[string]string) {
 
 func (s *StoreInMemory) Save(dst map[string]string) {
 	maps.Copy(dst, s.storage)
+}
+
+func (s *StoreInMemory) TestConnection(_ context.Context) error {
+	return nil
 }

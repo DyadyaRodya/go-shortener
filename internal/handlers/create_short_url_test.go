@@ -66,16 +66,17 @@ func (h *handlersSuite) TestCreateShortURL() {
 
 	for _, test := range tests {
 		h.Run(test.name, func() {
-			if test.usecaseParam != "" && test.usecaseRes != nil {
-				h.usecases.EXPECT().CreateShortURL(test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
-			}
-
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 
 			test.request.Header.Set("Content-Type", test.contentType)
 			e := echo.New()
 			c := e.NewContext(test.request, w)
+
+			ctx := c.Request().Context()
+			if test.usecaseParam != "" && test.usecaseRes != nil {
+				h.usecases.EXPECT().CreateShortURL(ctx, test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
+			}
 
 			if h.NoError(h.handlers.CreateShortURL(c)) {
 				// проверяем код ответа
@@ -150,16 +151,17 @@ func (h *handlersSuite) TestCreateShortURLJSON() {
 
 	for _, test := range tests {
 		h.Run(test.name, func() {
-			if test.usecaseParam != "" && test.usecaseRes != nil {
-				h.usecases.EXPECT().CreateShortURL(test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
-			}
-
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 
 			test.request.Header.Set("Content-Type", test.contentType)
 			e := echo.New()
 			c := e.NewContext(test.request, w)
+
+			ctx := c.Request().Context()
+			if test.usecaseParam != "" && test.usecaseRes != nil {
+				h.usecases.EXPECT().CreateShortURL(ctx, test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
+			}
 
 			if h.NoError(h.handlers.CreateShortURLJSON(c)) {
 				// проверяем код ответа

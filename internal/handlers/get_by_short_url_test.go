@@ -55,8 +55,6 @@ func (h *handlersSuite) TestGetShortURL() {
 
 	for _, test := range tests {
 		h.Run(test.name, func() {
-			h.usecases.EXPECT().GetShortURL(test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
-
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 
@@ -65,6 +63,9 @@ func (h *handlersSuite) TestGetShortURL() {
 			c.SetPath(":id")
 			c.SetParamNames("id")
 			c.SetParamValues(test.usecaseParam)
+
+			ctx := c.Request().Context()
+			h.usecases.EXPECT().GetShortURL(ctx, test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
 
 			if h.NoError(h.handlers.GetByShortURL(c)) {
 				// проверяем код ответа

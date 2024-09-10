@@ -1,11 +1,15 @@
 package usecases
 
-import "github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+import (
+	"context"
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+)
 
 type (
 	URLStorage interface {
-		GetURLByID(string) (*entity.ShortURL, error)
-		AddURL(*entity.ShortURL) error
+		TestConnection(ctx context.Context) error
+		GetURLByID(ctx context.Context, ID string) (*entity.ShortURL, error)
+		AddURL(ctx context.Context, ShortURL *entity.ShortURL) error
 	}
 	IDGenerator interface {
 		Generate() (string, error)

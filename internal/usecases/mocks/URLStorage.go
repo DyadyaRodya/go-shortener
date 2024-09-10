@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	entity "github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -20,17 +22,17 @@ func (_m *URLStorage) EXPECT() *URLStorage_Expecter {
 	return &URLStorage_Expecter{mock: &_m.Mock}
 }
 
-// AddURL provides a mock function with given fields: _a0
-func (_m *URLStorage) AddURL(_a0 *entity.ShortURL) error {
-	ret := _m.Called(_a0)
+// AddURL provides a mock function with given fields: ctx, ShortURL
+func (_m *URLStorage) AddURL(ctx context.Context, ShortURL *entity.ShortURL) error {
+	ret := _m.Called(ctx, ShortURL)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddURL")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*entity.ShortURL) error); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.ShortURL) error); ok {
+		r0 = rf(ctx, ShortURL)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -44,14 +46,15 @@ type URLStorage_AddURL_Call struct {
 }
 
 // AddURL is a helper method to define mock.On call
-//   - _a0 *entity.ShortURL
-func (_e *URLStorage_Expecter) AddURL(_a0 interface{}) *URLStorage_AddURL_Call {
-	return &URLStorage_AddURL_Call{Call: _e.mock.On("AddURL", _a0)}
+//   - ctx context.Context
+//   - ShortURL *entity.ShortURL
+func (_e *URLStorage_Expecter) AddURL(ctx interface{}, ShortURL interface{}) *URLStorage_AddURL_Call {
+	return &URLStorage_AddURL_Call{Call: _e.mock.On("AddURL", ctx, ShortURL)}
 }
 
-func (_c *URLStorage_AddURL_Call) Run(run func(_a0 *entity.ShortURL)) *URLStorage_AddURL_Call {
+func (_c *URLStorage_AddURL_Call) Run(run func(ctx context.Context, ShortURL *entity.ShortURL)) *URLStorage_AddURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*entity.ShortURL))
+		run(args[0].(context.Context), args[1].(*entity.ShortURL))
 	})
 	return _c
 }
@@ -61,14 +64,14 @@ func (_c *URLStorage_AddURL_Call) Return(_a0 error) *URLStorage_AddURL_Call {
 	return _c
 }
 
-func (_c *URLStorage_AddURL_Call) RunAndReturn(run func(*entity.ShortURL) error) *URLStorage_AddURL_Call {
+func (_c *URLStorage_AddURL_Call) RunAndReturn(run func(context.Context, *entity.ShortURL) error) *URLStorage_AddURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetURLByID provides a mock function with given fields: _a0
-func (_m *URLStorage) GetURLByID(_a0 string) (*entity.ShortURL, error) {
-	ret := _m.Called(_a0)
+// GetURLByID provides a mock function with given fields: ctx, ID
+func (_m *URLStorage) GetURLByID(ctx context.Context, ID string) (*entity.ShortURL, error) {
+	ret := _m.Called(ctx, ID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetURLByID")
@@ -76,19 +79,19 @@ func (_m *URLStorage) GetURLByID(_a0 string) (*entity.ShortURL, error) {
 
 	var r0 *entity.ShortURL
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*entity.ShortURL, error)); ok {
-		return rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*entity.ShortURL, error)); ok {
+		return rf(ctx, ID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *entity.ShortURL); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *entity.ShortURL); ok {
+		r0 = rf(ctx, ID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.ShortURL)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, ID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,14 +105,15 @@ type URLStorage_GetURLByID_Call struct {
 }
 
 // GetURLByID is a helper method to define mock.On call
-//   - _a0 string
-func (_e *URLStorage_Expecter) GetURLByID(_a0 interface{}) *URLStorage_GetURLByID_Call {
-	return &URLStorage_GetURLByID_Call{Call: _e.mock.On("GetURLByID", _a0)}
+//   - ctx context.Context
+//   - ID string
+func (_e *URLStorage_Expecter) GetURLByID(ctx interface{}, ID interface{}) *URLStorage_GetURLByID_Call {
+	return &URLStorage_GetURLByID_Call{Call: _e.mock.On("GetURLByID", ctx, ID)}
 }
 
-func (_c *URLStorage_GetURLByID_Call) Run(run func(_a0 string)) *URLStorage_GetURLByID_Call {
+func (_c *URLStorage_GetURLByID_Call) Run(run func(ctx context.Context, ID string)) *URLStorage_GetURLByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -119,7 +123,53 @@ func (_c *URLStorage_GetURLByID_Call) Return(_a0 *entity.ShortURL, _a1 error) *U
 	return _c
 }
 
-func (_c *URLStorage_GetURLByID_Call) RunAndReturn(run func(string) (*entity.ShortURL, error)) *URLStorage_GetURLByID_Call {
+func (_c *URLStorage_GetURLByID_Call) RunAndReturn(run func(context.Context, string) (*entity.ShortURL, error)) *URLStorage_GetURLByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TestConnection provides a mock function with given fields: ctx
+func (_m *URLStorage) TestConnection(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TestConnection")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// URLStorage_TestConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TestConnection'
+type URLStorage_TestConnection_Call struct {
+	*mock.Call
+}
+
+// TestConnection is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *URLStorage_Expecter) TestConnection(ctx interface{}) *URLStorage_TestConnection_Call {
+	return &URLStorage_TestConnection_Call{Call: _e.mock.On("TestConnection", ctx)}
+}
+
+func (_c *URLStorage_TestConnection_Call) Run(run func(ctx context.Context)) *URLStorage_TestConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *URLStorage_TestConnection_Call) Return(_a0 error) *URLStorage_TestConnection_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *URLStorage_TestConnection_Call) RunAndReturn(run func(context.Context) error) *URLStorage_TestConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

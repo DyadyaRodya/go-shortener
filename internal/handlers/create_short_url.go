@@ -13,7 +13,8 @@ func (h *Handlers) CreateShortURL(c echo.Context) error {
 		return c.NoContent(errorResponse.Code)
 	}
 
-	shortURL, err := h.Usecases.CreateShortURL(createShortURLData.URL)
+	ctx := c.Request().Context()
+	shortURL, err := h.Usecases.CreateShortURL(ctx, createShortURLData.URL)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -32,7 +33,8 @@ func (h *Handlers) CreateShortURLJSON(c echo.Context) error {
 		return c.NoContent(errorResponse.Code)
 	}
 
-	shortURL, err := h.Usecases.CreateShortURL(createShortURLData.URL)
+	ctx := c.Request().Context()
+	shortURL, err := h.Usecases.CreateShortURL(ctx, createShortURLData.URL)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}

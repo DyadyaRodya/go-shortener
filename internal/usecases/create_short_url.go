@@ -1,11 +1,12 @@
 package usecases
 
 import (
+	"context"
 	"errors"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
-func (u *Usecases) CreateShortURL(url string) (*entity.ShortURL, error) {
+func (u *Usecases) CreateShortURL(ctx context.Context, url string) (*entity.ShortURL, error) {
 	var id string
 	var err error
 	for {
@@ -13,7 +14,7 @@ func (u *Usecases) CreateShortURL(url string) (*entity.ShortURL, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = u.urlStorage.GetURLByID(id)
+		_, err = u.urlStorage.GetURLByID(ctx, id)
 		if err != nil {
 			if errors.Is(err, entity.ErrShortURLNotFound) {
 				break
@@ -23,7 +24,7 @@ func (u *Usecases) CreateShortURL(url string) (*entity.ShortURL, error) {
 	}
 
 	shortURL := &entity.ShortURL{ID: id, URL: url}
-	if err = u.urlStorage.AddURL(shortURL); err != nil {
+	if err = u.urlStorage.AddURL(ctx, shortURL); err != nil {
 		return nil, err
 	}
 	return shortURL, nil

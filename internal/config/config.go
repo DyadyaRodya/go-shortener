@@ -11,6 +11,7 @@ type Config struct {
 	ServerAddress  string
 	LogLevel       string
 	StorageFile    string
+	DSN            string
 }
 
 func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, defaultStorageFile string) *Config {
@@ -18,6 +19,7 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 	baseURL := flag.String("b", defaultBaseURL, "base url for short url")
 	logLevel := flag.String("l", defaultLogLevel, "log level")
 	storageFile := flag.String("f", defaultStorageFile, "file storage path")
+	dsn := flag.String("d", "", "database connection string")
 	flag.Parse()
 
 	if envServerAddress := os.Getenv("SERVER_ADDRESS"); envServerAddress != "" {
@@ -32,6 +34,9 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 	if envStorageFile := os.Getenv("FILE_STORAGE_PATH"); envStorageFile != "" {
 		storageFile = &envStorageFile
 	}
+	if envDSN := os.Getenv("DATABASE_DSN"); envDSN != "" {
+		dsn = &envDSN
+	}
 
 	return &Config{
 		HandlersConfig: &handlers.Config{
@@ -40,5 +45,6 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 		ServerAddress: *serverAddress,
 		LogLevel:      *logLevel,
 		StorageFile:   *storageFile,
+		DSN:           *dsn,
 	}
 }

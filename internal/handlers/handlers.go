@@ -1,13 +1,15 @@
 package handlers
 
 import (
+	"context"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
 type (
 	Usecases interface {
-		GetShortURL(ID string) (*entity.ShortURL, error)
-		CreateShortURL(URL string) (*entity.ShortURL, error)
+		CheckConnection(ctx context.Context) error
+		GetShortURL(ctx context.Context, ID string) (*entity.ShortURL, error)
+		CreateShortURL(ctx context.Context, URL string) (*entity.ShortURL, error)
 	}
 
 	Config struct {
