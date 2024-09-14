@@ -11,7 +11,7 @@ const (
 	defaultBaseShortURL  = "http://localhost:8080/"
 	defaultServerAddress = `:8080`
 	defaultLogLevel      = "info"
-	defaultStorageFile   = "/tmp/shortener.txt"
+	defaultStorageFile   = ""
 )
 
 func main() {

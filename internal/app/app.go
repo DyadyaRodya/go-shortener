@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"github.com/DyadyaRodya/go-shortener/internal/config"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/services"
@@ -11,6 +10,7 @@ import (
 	"github.com/DyadyaRodya/go-shortener/internal/repositories/inmemory"
 	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
+	"github.com/DyadyaRodya/go-shortener/pkg/jsonfile"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -18,6 +18,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -26,6 +27,7 @@ type App struct {
 	e          *echo.Echo
 	appLogger  *zap.Logger
 	appStorage *usecases.URLStorage
+	close      func()
 }
 
 func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultStorageFile string) *App {
@@ -55,17 +57,19 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	idGenerator := services.NewIDGenerator()
 
 	// init storage
+	var closeStorage func()
 	var store usecases.URLStorage
 	if appConfig.DSN == "" {
 		s := inmemory.NewStoreInMemory()
 		store = s
+		closeStorage = func() {}
 	} else {
 		pool, err := pgxpool.New(context.Background(), appConfig.DSN)
 		if err != nil {
 			appLogger.Fatal("Cannot create connection pool to database", zap.String("DSN", appConfig.DSN), zap.Error(err))
 		}
-
-		s := pgxrepo.NewStorePGX(pool)
+		closeStorage = pool.Close
+		s := pgxrepo.NewStorePGX(pool, appLogger)
 		store = s
 	}
 	// init usecases
@@ -82,6 +86,7 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 		e:          e,
 		appLogger:  appLogger,
 		appStorage: &store,
+		close:      closeStorage,
 	}
 }
 
@@ -97,7 +102,7 @@ func (a *App) Run() error {
 	}
 	a.appLogger.Info("Starting server at", zap.String("address", a.appConfig.ServerAddress))
 	err = a.e.Start(a.appConfig.ServerAddress)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "http: Server closed") {
 		a.appLogger.Error("Starting error", zap.Error(err))
 		return err
 	}
@@ -105,26 +110,33 @@ func (a *App) Run() error {
 }
 
 func (a *App) Shutdown(signal os.Signal) error {
+	defer a.close()
+
+	ctx := context.Background()
 	a.appLogger.Info("Stopped server on signal", zap.String("signal", signal.String()))
 
-	switch v := (*a.appStorage).(type) {
-	case *inmemory.StoreInMemory:
-		file, err := os.OpenFile(a.appConfig.StorageFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-		if err != nil {
-			return nil
+	if a.appConfig.StorageFile != "" {
+		var err error
+		var data *map[string]string
+		switch v := (*a.appStorage).(type) {
+		case *inmemory.StoreInMemory:
+			data = v.Storage()
+
+		case *pgxrepo.StorePGX:
+			data, err = v.Save(ctx)
+			if err != nil {
+				return err
+			}
+		default:
+
 		}
-
-		defer file.Close()
-
-		err = json.NewEncoder(file).Encode(v.Storage())
+		err = jsonfile.WriteMapToFile(a.appConfig.StorageFile, data)
 		if err != nil {
 			return err
 		}
-	default:
-
 	}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelFunc()
 	err := a.e.Shutdown(ctx)
 	return err
@@ -133,14 +145,12 @@ func (a *App) Shutdown(signal os.Signal) error {
 func (a *App) readInitData() error {
 	switch v := (*a.appStorage).(type) {
 	case *inmemory.StoreInMemory:
-		file, err := os.OpenFile(a.appConfig.StorageFile, os.O_RDONLY|os.O_CREATE, 0666)
-		if err != nil {
-			return err
+		if a.appConfig.StorageFile == "" {
+			return nil
 		}
 
-		defer file.Close()
+		err := jsonfile.ReadFileToMap(a.appConfig.StorageFile, v.Storage())
 
-		err = json.NewDecoder(file).Decode(v.Storage())
 		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
@@ -152,6 +162,33 @@ func (a *App) readInitData() error {
 		}
 
 		return nil
+	case *pgxrepo.StorePGX:
+		ctx := context.Background()
+		ctx, cancelFunc := context.WithTimeout(ctx, 3*time.Second)
+		defer cancelFunc()
+		err := v.InitSchema(ctx)
+		if err != nil {
+			return err
+		}
+
+		if a.appConfig.StorageFile == "" {
+			return nil
+		}
+
+		src := make(map[string]string)
+		err = jsonfile.ReadFileToMap(a.appConfig.StorageFile, &src)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return err
+		}
+
+		if err != nil {
+			a.appLogger.Info("Empty storage file")
+			return nil
+		} else {
+			a.appLogger.Info("Storage file successfully read, loading data to DB")
+		}
+
+		return v.Load(ctx, src)
 	default:
 		a.appLogger.Warn("Not using init file for current storage type")
 		return nil
