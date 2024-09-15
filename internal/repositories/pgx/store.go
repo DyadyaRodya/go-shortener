@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"github.com/DyadyaRodya/go-shortener/internal/usecases"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -153,4 +154,14 @@ func (s *StorePGX) GetURLByID(ctx context.Context, ID string) (*entity.ShortURL,
 		return nil, err
 	}
 	return &entity.ShortURL{URL: url, ID: ID}, nil
+}
+
+func (s *StorePGX) Begin(ctx context.Context) (usecases.Transaction, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		s.logger.Error("Failed to start transaction", zap.Error(err))
+		return nil, fmt.Errorf("error in StorePGX.Begin: %w", err)
+	}
+	txPGX := &TransactionPGX{tx: tx, logger: s.logger}
+	return txPGX, nil
 }

@@ -7,15 +7,17 @@ import (
 )
 
 const (
-	rootURL       = "/"
-	apiShortenURL = "/api/shorten"
-	idURL         = "/:" + dto.IDParamName
-	pingURL       = "/ping"
+	rootURL            = "/"
+	apiShortenURL      = "/api/shorten"
+	apiShortenURLBatch = "/api/shorten/batch"
+	idURL              = "/:" + dto.IDParamName
+	pingURL            = "/ping"
 )
 
 func setupRoutes(e *echo.Echo, handlers *handlers.Handlers) {
 	e.GET(idURL, handlers.GetByShortURL)
 	e.POST(rootURL, handlers.CreateShortURL)
 	e.POST(apiShortenURL, handlers.CreateShortURLJSON)
+	e.POST(apiShortenURLBatch, handlers.BatchCreateShortURLJSON)
 	e.GET(pingURL, handlers.PingHandler)
 }

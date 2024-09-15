@@ -3,6 +3,7 @@ package inmemory
 import (
 	"context"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"github.com/DyadyaRodya/go-shortener/internal/usecases"
 	"maps"
 	"sync"
 )
@@ -56,4 +57,14 @@ func (s *StoreInMemory) Save(dst map[string]string) {
 
 func (s *StoreInMemory) TestConnection(_ context.Context) error {
 	return nil
+}
+
+func (s *StoreInMemory) Begin(_ context.Context) (usecases.Transaction, error) {
+	buf := make(map[string]string)
+	s.lock.Lock()
+	maps.Copy(buf, s.storage)
+	tx := &TransactionInMemory{
+		StoreInMemory: s, buf: buf,
+	}
+	return tx, nil
 }

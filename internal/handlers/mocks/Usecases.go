@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	entity "github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	dto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -21,6 +22,65 @@ type Usecases_Expecter struct {
 
 func (_m *Usecases) EXPECT() *Usecases_Expecter {
 	return &Usecases_Expecter{mock: &_m.Mock}
+}
+
+// BatchCreateShortURLs provides a mock function with given fields: ctx, createRequests
+func (_m *Usecases) BatchCreateShortURLs(ctx context.Context, createRequests []*dto.BatchCreateRequest) ([]*dto.BatchCreateResponse, error) {
+	ret := _m.Called(ctx, createRequests)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BatchCreateShortURLs")
+	}
+
+	var r0 []*dto.BatchCreateResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []*dto.BatchCreateRequest) ([]*dto.BatchCreateResponse, error)); ok {
+		return rf(ctx, createRequests)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []*dto.BatchCreateRequest) []*dto.BatchCreateResponse); ok {
+		r0 = rf(ctx, createRequests)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*dto.BatchCreateResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []*dto.BatchCreateRequest) error); ok {
+		r1 = rf(ctx, createRequests)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Usecases_BatchCreateShortURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchCreateShortURLs'
+type Usecases_BatchCreateShortURLs_Call struct {
+	*mock.Call
+}
+
+// BatchCreateShortURLs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - createRequests []*dto.BatchCreateRequest
+func (_e *Usecases_Expecter) BatchCreateShortURLs(ctx interface{}, createRequests interface{}) *Usecases_BatchCreateShortURLs_Call {
+	return &Usecases_BatchCreateShortURLs_Call{Call: _e.mock.On("BatchCreateShortURLs", ctx, createRequests)}
+}
+
+func (_c *Usecases_BatchCreateShortURLs_Call) Run(run func(ctx context.Context, createRequests []*dto.BatchCreateRequest)) *Usecases_BatchCreateShortURLs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]*dto.BatchCreateRequest))
+	})
+	return _c
+}
+
+func (_c *Usecases_BatchCreateShortURLs_Call) Return(_a0 []*dto.BatchCreateResponse, _a1 error) *Usecases_BatchCreateShortURLs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Usecases_BatchCreateShortURLs_Call) RunAndReturn(run func(context.Context, []*dto.BatchCreateRequest) ([]*dto.BatchCreateResponse, error)) *Usecases_BatchCreateShortURLs_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // CheckConnection provides a mock function with given fields: ctx
