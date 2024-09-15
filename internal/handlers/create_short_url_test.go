@@ -62,6 +62,24 @@ func (h *handlersSuite) TestCreateShortURL() {
 				response: "",
 			},
 		},
+		{
+			name:         "ShortURL_exists",
+			request:      httptest.NewRequest(http.MethodPost, "/", strings.NewReader("http://full.url.com/test")),
+			contentType:  "text/plain; charset=utf-8",
+			usecaseParam: "http://full.url.com/test",
+			usecaseRes: &usecaseResult{
+				shortURL: &entity.ShortURL{
+					ID:  "10abcdef",
+					URL: "http://full.url.com/test",
+				},
+				err: entity.ErrShortURLExists,
+			},
+			want: want{
+				code:        http.StatusConflict,
+				response:    h.config.BaseShortURL + "/10abcdef",
+				contentType: "text/plain; charset=UTF-8",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -145,6 +163,24 @@ func (h *handlersSuite) TestCreateShortURLJSON() {
 			want: want{
 				code:     http.StatusBadRequest,
 				response: "",
+			},
+		},
+		{
+			name:         "ShortURL_exists",
+			request:      httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(`{"url":"http://full.url.com/test"}`)),
+			contentType:  "application/json; charset=utf-8",
+			usecaseParam: "http://full.url.com/test",
+			usecaseRes: &usecaseResult{
+				shortURL: &entity.ShortURL{
+					ID:  "10abcdef",
+					URL: "http://full.url.com/test",
+				},
+				err: entity.ErrShortURLExists,
+			},
+			want: want{
+				code:        http.StatusConflict,
+				response:    `{"result":"` + h.config.BaseShortURL + "/10abcdef" + `"}`,
+				contentType: "application/json",
 			},
 		},
 	}

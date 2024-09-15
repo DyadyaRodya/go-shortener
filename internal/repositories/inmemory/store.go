@@ -27,6 +27,15 @@ func (s *StoreInMemory) Storage() *map[string]string {
 func (s *StoreInMemory) AddURL(_ context.Context, ShortURL *entity.ShortURL) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	_, ok := s.storage[ShortURL.ID]
+	if ok {
+		return entity.ErrUUIDTaken
+	}
+	for _, url := range s.storage {
+		if url == ShortURL.URL {
+			return entity.ErrShortURLExists
+		}
+	}
 	s.storage[ShortURL.ID] = ShortURL.URL
 	return nil
 }
@@ -45,6 +54,23 @@ func (s *StoreInMemory) GetURLByID(_ context.Context, ID string) (*entity.ShortU
 		URL: url,
 	}
 	return shortURL, nil
+}
+
+func (s *StoreInMemory) GetShortByURL(_ context.Context, URL string) (*entity.ShortURL, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	for uuid, url := range s.storage {
+		if url == URL {
+			shortURL := &entity.ShortURL{
+				ID:  uuid,
+				URL: url,
+			}
+			return shortURL, nil
+		}
+	}
+
+	return nil, entity.ErrShortURLNotFound
 }
 
 func (s *StoreInMemory) Load(src map[string]string) {

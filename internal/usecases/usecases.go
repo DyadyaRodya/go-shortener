@@ -17,6 +17,7 @@ type (
 	URLStorage interface {
 		TestConnection(ctx context.Context) error
 		GetURLByID(ctx context.Context, ID string) (*entity.ShortURL, error)
+		GetShortByURL(ctx context.Context, URL string) (*entity.ShortURL, error)
 		AddURL(ctx context.Context, ShortURL *entity.ShortURL) error
 
 		Begin(ctx context.Context) (Transaction, error)

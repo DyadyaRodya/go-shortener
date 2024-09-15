@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -15,8 +17,15 @@ func (h *Handlers) CreateShortURL(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	shortURL, err := h.Usecases.CreateShortURL(ctx, createShortURLData.URL)
-	if err != nil {
+	if err != nil && !errors.Is(err, entity.ErrShortURLExists) {
 		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	var statusCode int
+	if err != nil {
+		statusCode = http.StatusConflict
+	} else {
+		statusCode = http.StatusCreated
 	}
 
 	fullShortURL, err := url.JoinPath(h.Config.BaseShortURL, shortURL.ID)
@@ -24,7 +33,7 @@ func (h *Handlers) CreateShortURL(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.String(http.StatusCreated, fullShortURL)
+	return c.String(statusCode, fullShortURL)
 }
 
 func (h *Handlers) CreateShortURLJSON(c echo.Context) error {
@@ -35,8 +44,15 @@ func (h *Handlers) CreateShortURLJSON(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	shortURL, err := h.Usecases.CreateShortURL(ctx, createShortURLData.URL)
-	if err != nil {
+	if err != nil && !errors.Is(err, entity.ErrShortURLExists) {
 		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	var statusCode int
+	if err != nil {
+		statusCode = http.StatusConflict
+	} else {
+		statusCode = http.StatusCreated
 	}
 
 	fullShortURL, err := url.JoinPath(h.Config.BaseShortURL, shortURL.ID)
@@ -44,5 +60,5 @@ func (h *Handlers) CreateShortURLJSON(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	response := dto.NewCreateShortURLDataResponse(fullShortURL)
-	return c.JSON(http.StatusCreated, response)
+	return c.JSON(statusCode, response)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type StorePGX struct {
@@ -54,7 +55,7 @@ func (s *StorePGX) Load(ctx context.Context, src map[string]string) error {
 	}
 	defer tx.Rollback(ctx)
 
-	sqlQuery := `INSERT INTO short_urls (uuid, url) VALUES (@uuid, @url) ON CONFLICT (uuid) DO NOTHING`
+	sqlQuery := `INSERT INTO short_urls (uuid, url) VALUES (@uuid, @url) ON CONFLICT DO NOTHING`
 
 	for uuid, url := range src {
 		ct, err := tx.Exec(ctx, sqlQuery, pgx.NamedArgs{"uuid": uuid, "url": url})
@@ -111,14 +112,15 @@ func (s *StorePGX) TestConnection(ctx context.Context) error {
 
 func (s *StorePGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL) error {
 	s.logger.Debug("Adding URL", zap.Any("ShortURL", ShortURL))
-	ct, err := s.pool.Exec(ctx, `INSERT INTO short_urls (uuid, url) VALUES (@uuid, @url)`, pgx.NamedArgs{"uuid": ShortURL.ID, "url": ShortURL.URL})
+	ct, err := s.pool.Exec(ctx, `INSERT INTO short_urls (uuid, url) VALUES (@uuid, @url)`,
+		pgx.NamedArgs{"uuid": ShortURL.ID, "url": ShortURL.URL})
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-		switch pgErr.ColumnName {
-		case "uuid":
+		switch {
+		case strings.Contains(pgErr.ConstraintName, "short_urls_pkey"):
 			return entity.ErrUUIDTaken
-		case "url":
+		case strings.Contains(pgErr.ConstraintName, "short_urls_url_key"):
 			return entity.ErrShortURLExists
 		}
 	}
@@ -128,16 +130,34 @@ func (s *StorePGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL) error 
 			zap.String("uuid", ShortURL.ID),
 			zap.String("url", ShortURL.URL),
 			zap.Error(err))
-		return err
+		return fmt.Errorf("StorePGX.AddURL: %w", err)
 	}
 	if !ct.Insert() {
 		s.logger.Error("Failed to insert into short_urls",
 			zap.String("uuid", ShortURL.ID),
 			zap.String("url", ShortURL.URL),
 			zap.Any("commandTag", ct))
-		return errors.New("error in StorePGX.AddURL: not inserted url: " + ShortURL.URL + " uuid: " + ShortURL.ID)
+		return errors.New("error in StorePGX.AddURL: not inserted url: " +
+			ShortURL.URL + " uuid: " + ShortURL.ID)
 	}
+
 	return nil
+}
+
+func (s *StorePGX) GetShortByURL(ctx context.Context, URL string) (*entity.ShortURL, error) {
+	s.logger.Debug("Getting Short URL by full URL", zap.String("URL", URL))
+
+	var uuid string
+	err := s.pool.QueryRow(ctx, `SELECT uuid FROM short_urls WHERE url = @url`, pgx.NamedArgs{"url": URL}).
+		Scan(&uuid)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entity.ErrShortURLNotFound
+		}
+		s.logger.Error("Failed to get Short URL by full URL", zap.String("URL", URL), zap.Error(err))
+		return nil, err
+	}
+	return &entity.ShortURL{URL: URL, ID: uuid}, nil
 }
 
 func (s *StorePGX) GetURLByID(ctx context.Context, ID string) (*entity.ShortURL, error) {
