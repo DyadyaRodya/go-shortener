@@ -24,17 +24,17 @@ func (_m *URLStorage) EXPECT() *URLStorage_Expecter {
 	return &URLStorage_Expecter{mock: &_m.Mock}
 }
 
-// AddURL provides a mock function with given fields: ctx, ShortURL
-func (_m *URLStorage) AddURL(ctx context.Context, ShortURL *entity.ShortURL) error {
-	ret := _m.Called(ctx, ShortURL)
+// AddURL provides a mock function with given fields: ctx, ShortURL, OwnerUUID
+func (_m *URLStorage) AddURL(ctx context.Context, ShortURL *entity.ShortURL, OwnerUUID string) error {
+	ret := _m.Called(ctx, ShortURL, OwnerUUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddURL")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.ShortURL) error); ok {
-		r0 = rf(ctx, ShortURL)
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.ShortURL, string) error); ok {
+		r0 = rf(ctx, ShortURL, OwnerUUID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -50,13 +50,14 @@ type URLStorage_AddURL_Call struct {
 // AddURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ShortURL *entity.ShortURL
-func (_e *URLStorage_Expecter) AddURL(ctx interface{}, ShortURL interface{}) *URLStorage_AddURL_Call {
-	return &URLStorage_AddURL_Call{Call: _e.mock.On("AddURL", ctx, ShortURL)}
+//   - OwnerUUID string
+func (_e *URLStorage_Expecter) AddURL(ctx interface{}, ShortURL interface{}, OwnerUUID interface{}) *URLStorage_AddURL_Call {
+	return &URLStorage_AddURL_Call{Call: _e.mock.On("AddURL", ctx, ShortURL, OwnerUUID)}
 }
 
-func (_c *URLStorage_AddURL_Call) Run(run func(ctx context.Context, ShortURL *entity.ShortURL)) *URLStorage_AddURL_Call {
+func (_c *URLStorage_AddURL_Call) Run(run func(ctx context.Context, ShortURL *entity.ShortURL, OwnerUUID string)) *URLStorage_AddURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*entity.ShortURL))
+		run(args[0].(context.Context), args[1].(*entity.ShortURL), args[2].(string))
 	})
 	return _c
 }
@@ -66,7 +67,7 @@ func (_c *URLStorage_AddURL_Call) Return(_a0 error) *URLStorage_AddURL_Call {
 	return _c
 }
 
-func (_c *URLStorage_AddURL_Call) RunAndReturn(run func(context.Context, *entity.ShortURL) error) *URLStorage_AddURL_Call {
+func (_c *URLStorage_AddURL_Call) RunAndReturn(run func(context.Context, *entity.ShortURL, string) error) *URLStorage_AddURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -129,65 +130,6 @@ func (_c *URLStorage_Begin_Call) RunAndReturn(run func(context.Context) (usecase
 	return _c
 }
 
-// GetShortByURL provides a mock function with given fields: ctx, URL
-func (_m *URLStorage) GetShortByURL(ctx context.Context, URL string) (*entity.ShortURL, error) {
-	ret := _m.Called(ctx, URL)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetShortByURL")
-	}
-
-	var r0 *entity.ShortURL
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*entity.ShortURL, error)); ok {
-		return rf(ctx, URL)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *entity.ShortURL); ok {
-		r0 = rf(ctx, URL)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*entity.ShortURL)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, URL)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// URLStorage_GetShortByURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetShortByURL'
-type URLStorage_GetShortByURL_Call struct {
-	*mock.Call
-}
-
-// GetShortByURL is a helper method to define mock.On call
-//   - ctx context.Context
-//   - URL string
-func (_e *URLStorage_Expecter) GetShortByURL(ctx interface{}, URL interface{}) *URLStorage_GetShortByURL_Call {
-	return &URLStorage_GetShortByURL_Call{Call: _e.mock.On("GetShortByURL", ctx, URL)}
-}
-
-func (_c *URLStorage_GetShortByURL_Call) Run(run func(ctx context.Context, URL string)) *URLStorage_GetShortByURL_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *URLStorage_GetShortByURL_Call) Return(_a0 *entity.ShortURL, _a1 error) *URLStorage_GetShortByURL_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *URLStorage_GetShortByURL_Call) RunAndReturn(run func(context.Context, string) (*entity.ShortURL, error)) *URLStorage_GetShortByURL_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetURLByID provides a mock function with given fields: ctx, ID
 func (_m *URLStorage) GetURLByID(ctx context.Context, ID string) (*entity.ShortURL, error) {
 	ret := _m.Called(ctx, ID)
@@ -243,6 +185,65 @@ func (_c *URLStorage_GetURLByID_Call) Return(_a0 *entity.ShortURL, _a1 error) *U
 }
 
 func (_c *URLStorage_GetURLByID_Call) RunAndReturn(run func(context.Context, string) (*entity.ShortURL, error)) *URLStorage_GetURLByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserUrls provides a mock function with given fields: ctx, UserUUID
+func (_m *URLStorage) GetUserUrls(ctx context.Context, UserUUID string) (map[string]*entity.ShortURL, error) {
+	ret := _m.Called(ctx, UserUUID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserUrls")
+	}
+
+	var r0 map[string]*entity.ShortURL
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (map[string]*entity.ShortURL, error)); ok {
+		return rf(ctx, UserUUID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) map[string]*entity.ShortURL); ok {
+		r0 = rf(ctx, UserUUID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]*entity.ShortURL)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, UserUUID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// URLStorage_GetUserUrls_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserUrls'
+type URLStorage_GetUserUrls_Call struct {
+	*mock.Call
+}
+
+// GetUserUrls is a helper method to define mock.On call
+//   - ctx context.Context
+//   - UserUUID string
+func (_e *URLStorage_Expecter) GetUserUrls(ctx interface{}, UserUUID interface{}) *URLStorage_GetUserUrls_Call {
+	return &URLStorage_GetUserUrls_Call{Call: _e.mock.On("GetUserUrls", ctx, UserUUID)}
+}
+
+func (_c *URLStorage_GetUserUrls_Call) Run(run func(ctx context.Context, UserUUID string)) *URLStorage_GetUserUrls_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *URLStorage_GetUserUrls_Call) Return(_a0 map[string]*entity.ShortURL, _a1 error) *URLStorage_GetUserUrls_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *URLStorage_GetUserUrls_Call) RunAndReturn(run func(context.Context, string) (map[string]*entity.ShortURL, error)) *URLStorage_GetUserUrls_Call {
 	_c.Call.Return(run)
 	return _c
 }

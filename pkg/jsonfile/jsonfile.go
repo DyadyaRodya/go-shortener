@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func ReadFileToMap(Filename string, Map *map[string]string) error {
+func ReadFileToAny(Filename string, s any) error {
 	file, err := os.OpenFile(Filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -13,10 +13,10 @@ func ReadFileToMap(Filename string, Map *map[string]string) error {
 
 	defer file.Close()
 
-	return json.NewDecoder(file).Decode(Map)
+	return json.NewDecoder(file).Decode(s)
 }
 
-func WriteMapToFile(Filename string, Map *map[string]string) error {
+func WriteAnyToFile(Filename string, s any) error {
 	file, err := os.OpenFile(Filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return nil
@@ -24,5 +24,5 @@ func WriteMapToFile(Filename string, Map *map[string]string) error {
 
 	defer file.Close()
 
-	return json.NewEncoder(file).Encode(Map)
+	return json.NewEncoder(file).Encode(s)
 }

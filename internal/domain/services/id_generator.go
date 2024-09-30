@@ -3,6 +3,7 @@ package services
 import (
 	"crypto/rand"
 	"encoding/hex"
+	uuidPkg "github.com/google/uuid"
 )
 
 type IDGenerator struct {
@@ -19,4 +20,18 @@ func (i *IDGenerator) Generate() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(id), nil
+}
+
+type UUID4Generator struct{}
+
+func NewUUID4Generator() *UUID4Generator {
+	return &UUID4Generator{}
+}
+
+func (u *UUID4Generator) Generate() (string, error) {
+	uuid, err := uuidPkg.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	return uuid.String(), nil
 }

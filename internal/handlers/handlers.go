@@ -10,11 +10,13 @@ type (
 	Usecases interface {
 		CheckConnection(ctx context.Context) error
 		GetShortURL(ctx context.Context, ID string) (*entity.ShortURL, error)
-		CreateShortURL(ctx context.Context, URL string) (*entity.ShortURL, error)
+		CreateShortURL(ctx context.Context, URL, UserUUID string) (*entity.ShortURL, error)
 		BatchCreateShortURLs(
 			ctx context.Context,
 			createRequests []*usecasesdto.BatchCreateRequest,
+			UserUUID string,
 		) ([]*usecasesdto.BatchCreateResponse, error)
+		GetUserShortURLs(ctx context.Context, userUUID string) ([]*entity.ShortURL, error)
 	}
 
 	Config struct {

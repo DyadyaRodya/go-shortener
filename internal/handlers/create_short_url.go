@@ -15,8 +15,13 @@ func (h *Handlers) CreateShortURL(c echo.Context) error {
 		return c.NoContent(errorResponse.Code)
 	}
 
+	userUUID, ok := c.Get("userUUID").(string)
+	if !ok {
+		userUUID = ""
+	}
+
 	ctx := c.Request().Context()
-	shortURL, err := h.Usecases.CreateShortURL(ctx, createShortURLData.URL)
+	shortURL, err := h.Usecases.CreateShortURL(ctx, createShortURLData.URL, userUUID)
 	if err != nil && !errors.Is(err, entity.ErrShortURLExists) {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -42,8 +47,13 @@ func (h *Handlers) CreateShortURLJSON(c echo.Context) error {
 		return c.NoContent(errorResponse.Code)
 	}
 
+	userUUID, ok := c.Get("userUUID").(string)
+	if !ok {
+		userUUID = ""
+	}
+
 	ctx := c.Request().Context()
-	shortURL, err := h.Usecases.CreateShortURL(ctx, createShortURLData.URL)
+	shortURL, err := h.Usecases.CreateShortURL(ctx, createShortURLData.URL, userUUID)
 	if err != nil && !errors.Is(err, entity.ErrShortURLExists) {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}

@@ -2,7 +2,9 @@ package app
 
 import (
 	"context"
-	"errors"
+	"crypto/rand"
+	"encoding/base64"
+	"github.com/DyadyaRodya/go-shortener/internal/auth"
 	"github.com/DyadyaRodya/go-shortener/internal/config"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/services"
 	"github.com/DyadyaRodya/go-shortener/internal/handlers"
@@ -10,12 +12,10 @@ import (
 	"github.com/DyadyaRodya/go-shortener/internal/repositories/inmemory"
 	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
-	"github.com/DyadyaRodya/go-shortener/pkg/jsonfile"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
-	"io"
 	"log"
 	"os"
 	"strings"
@@ -45,13 +45,32 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 
 	appLogger.Info("Config", zap.Any("config", appConfig))
 
+	secretKeyString := os.Getenv("SECRET_KEY")
+	var secretKey []byte
+	if secretKeyString == "" {
+		secretKey = newSecretKey(32)
+
+		base64Text := make([]byte, base64.URLEncoding.EncodedLen(len(secretKey)))
+		base64.URLEncoding.Encode(base64Text, secretKey)
+		appLogger.Info("New secret key", zap.ByteString("SECRET_KEY", base64Text))
+	} else {
+		appLogger.Info("old secret key", zap.String("SECRET_KEY", secretKeyString))
+
+		secretKey = make([]byte, base64.URLEncoding.DecodedLen(len(secretKeyString))-1)
+		n, err := base64.URLEncoding.Decode(secretKey, []byte(secretKeyString))
+		appLogger.Info("after decoding secret key", zap.Int("n", n), zap.Error(err))
+	}
+
 	// init Echo
 	e := echo.New()
+
+	var uuid4Generator auth.UUIDGenerator = services.NewUUID4Generator()
 
 	// Middleware
 	e.Use(loggerMW)
 	e.Use(NewGZIPMiddleware())
 	e.Use(middleware.Recover())
+	e.Use(auth.NewAuthJWTMiddleware(&uuid4Generator, secretKey))
 
 	// init services
 	idGenerator := services.NewIDGenerator()
@@ -91,10 +110,10 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 }
 
 func (a *App) Run() error {
-	a.appLogger.Info("Reading file storage", zap.String("path", a.appConfig.StorageFile))
+	a.appLogger.Info("Initializing storage and reading file", zap.String("path", a.appConfig.StorageFile))
 	err := a.readInitData()
 	if err != nil {
-		a.appLogger.Error("Reading file storage error",
+		a.appLogger.Error("Initializing storage or reading file error",
 			zap.String("path", a.appConfig.StorageFile),
 			zap.Error(err),
 		)
@@ -116,23 +135,19 @@ func (a *App) Shutdown(signal os.Signal) error {
 	a.appLogger.Info("Stopped server on signal", zap.String("signal", signal.String()))
 
 	if a.appConfig.StorageFile != "" {
-		var err error
-		var data *map[string]string
 		switch v := (*a.appStorage).(type) {
 		case *inmemory.StoreInMemory:
-			data = v.Storage()
-
+			err := a.saveFromStoreInMemory(v)
+			if err != nil {
+				return err
+			}
 		case *pgxrepo.StorePGX:
-			data, err = v.Save(ctx)
+			err := a.saveFromStorePGX(ctx, v)
 			if err != nil {
 				return err
 			}
 		default:
 
-		}
-		err = jsonfile.WriteMapToFile(a.appConfig.StorageFile, data)
-		if err != nil {
-			return err
 		}
 	}
 
@@ -142,56 +157,11 @@ func (a *App) Shutdown(signal os.Signal) error {
 	return err
 }
 
-func (a *App) readInitData() error {
-	switch v := (*a.appStorage).(type) {
-	case *inmemory.StoreInMemory:
-		if a.appConfig.StorageFile == "" {
-			return nil
-		}
-
-		err := jsonfile.ReadFileToMap(a.appConfig.StorageFile, v.Storage())
-
-		if err != nil && !errors.Is(err, io.EOF) {
-			return err
-		}
-
-		if err != nil {
-			a.appLogger.Info("Empty storage file")
-		} else {
-			a.appLogger.Info("Storage file successfully read")
-		}
-
-		return nil
-	case *pgxrepo.StorePGX:
-		ctx := context.Background()
-		ctx, cancelFunc := context.WithTimeout(ctx, 3*time.Second)
-		defer cancelFunc()
-		err := v.InitSchema(ctx)
-		if err != nil {
-			return err
-		}
-
-		if a.appConfig.StorageFile == "" {
-			return nil
-		}
-
-		src := make(map[string]string)
-		err = jsonfile.ReadFileToMap(a.appConfig.StorageFile, &src)
-		if err != nil && !errors.Is(err, io.EOF) {
-			return err
-		}
-
-		if err != nil {
-			a.appLogger.Info("Empty storage file")
-			return nil
-		} else {
-			a.appLogger.Info("Storage file successfully read, loading data to DB")
-		}
-
-		return v.Load(ctx, src)
-	default:
-		a.appLogger.Warn("Not using init file for current storage type")
-		return nil
-
+func newSecretKey(size int) []byte {
+	secretKey := make([]byte, size)
+	_, err := rand.Read(secretKey)
+	if err != nil {
+		panic(err)
 	}
+	return secretKey
 }

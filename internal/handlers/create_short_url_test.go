@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
@@ -91,9 +92,12 @@ func (h *handlersSuite) TestCreateShortURL() {
 			e := echo.New()
 			c := e.NewContext(test.request, w)
 
+			userUUID := gofakeit.UUID()
+			c.Set("userUUID", userUUID)
+
 			ctx := c.Request().Context()
 			if test.usecaseParam != "" && test.usecaseRes != nil {
-				h.usecases.EXPECT().CreateShortURL(ctx, test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
+				h.usecases.EXPECT().CreateShortURL(ctx, test.usecaseParam, userUUID).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
 			}
 
 			if h.NoError(h.handlers.CreateShortURL(c)) {
@@ -194,9 +198,12 @@ func (h *handlersSuite) TestCreateShortURLJSON() {
 			e := echo.New()
 			c := e.NewContext(test.request, w)
 
+			userUUID := gofakeit.UUID()
+			c.Set("userUUID", userUUID)
+
 			ctx := c.Request().Context()
 			if test.usecaseParam != "" && test.usecaseRes != nil {
-				h.usecases.EXPECT().CreateShortURL(ctx, test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
+				h.usecases.EXPECT().CreateShortURL(ctx, test.usecaseParam, userUUID).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
 			}
 
 			if h.NoError(h.handlers.CreateShortURLJSON(c)) {

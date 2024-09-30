@@ -24,9 +24,9 @@ func (_m *Usecases) EXPECT() *Usecases_Expecter {
 	return &Usecases_Expecter{mock: &_m.Mock}
 }
 
-// BatchCreateShortURLs provides a mock function with given fields: ctx, createRequests
-func (_m *Usecases) BatchCreateShortURLs(ctx context.Context, createRequests []*dto.BatchCreateRequest) ([]*dto.BatchCreateResponse, error) {
-	ret := _m.Called(ctx, createRequests)
+// BatchCreateShortURLs provides a mock function with given fields: ctx, createRequests, UserUUID
+func (_m *Usecases) BatchCreateShortURLs(ctx context.Context, createRequests []*dto.BatchCreateRequest, UserUUID string) ([]*dto.BatchCreateResponse, error) {
+	ret := _m.Called(ctx, createRequests, UserUUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BatchCreateShortURLs")
@@ -34,19 +34,19 @@ func (_m *Usecases) BatchCreateShortURLs(ctx context.Context, createRequests []*
 
 	var r0 []*dto.BatchCreateResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*dto.BatchCreateRequest) ([]*dto.BatchCreateResponse, error)); ok {
-		return rf(ctx, createRequests)
+	if rf, ok := ret.Get(0).(func(context.Context, []*dto.BatchCreateRequest, string) ([]*dto.BatchCreateResponse, error)); ok {
+		return rf(ctx, createRequests, UserUUID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []*dto.BatchCreateRequest) []*dto.BatchCreateResponse); ok {
-		r0 = rf(ctx, createRequests)
+	if rf, ok := ret.Get(0).(func(context.Context, []*dto.BatchCreateRequest, string) []*dto.BatchCreateResponse); ok {
+		r0 = rf(ctx, createRequests, UserUUID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*dto.BatchCreateResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []*dto.BatchCreateRequest) error); ok {
-		r1 = rf(ctx, createRequests)
+	if rf, ok := ret.Get(1).(func(context.Context, []*dto.BatchCreateRequest, string) error); ok {
+		r1 = rf(ctx, createRequests, UserUUID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -62,13 +62,14 @@ type Usecases_BatchCreateShortURLs_Call struct {
 // BatchCreateShortURLs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - createRequests []*dto.BatchCreateRequest
-func (_e *Usecases_Expecter) BatchCreateShortURLs(ctx interface{}, createRequests interface{}) *Usecases_BatchCreateShortURLs_Call {
-	return &Usecases_BatchCreateShortURLs_Call{Call: _e.mock.On("BatchCreateShortURLs", ctx, createRequests)}
+//   - UserUUID string
+func (_e *Usecases_Expecter) BatchCreateShortURLs(ctx interface{}, createRequests interface{}, UserUUID interface{}) *Usecases_BatchCreateShortURLs_Call {
+	return &Usecases_BatchCreateShortURLs_Call{Call: _e.mock.On("BatchCreateShortURLs", ctx, createRequests, UserUUID)}
 }
 
-func (_c *Usecases_BatchCreateShortURLs_Call) Run(run func(ctx context.Context, createRequests []*dto.BatchCreateRequest)) *Usecases_BatchCreateShortURLs_Call {
+func (_c *Usecases_BatchCreateShortURLs_Call) Run(run func(ctx context.Context, createRequests []*dto.BatchCreateRequest, UserUUID string)) *Usecases_BatchCreateShortURLs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]*dto.BatchCreateRequest))
+		run(args[0].(context.Context), args[1].([]*dto.BatchCreateRequest), args[2].(string))
 	})
 	return _c
 }
@@ -78,7 +79,7 @@ func (_c *Usecases_BatchCreateShortURLs_Call) Return(_a0 []*dto.BatchCreateRespo
 	return _c
 }
 
-func (_c *Usecases_BatchCreateShortURLs_Call) RunAndReturn(run func(context.Context, []*dto.BatchCreateRequest) ([]*dto.BatchCreateResponse, error)) *Usecases_BatchCreateShortURLs_Call {
+func (_c *Usecases_BatchCreateShortURLs_Call) RunAndReturn(run func(context.Context, []*dto.BatchCreateRequest, string) ([]*dto.BatchCreateResponse, error)) *Usecases_BatchCreateShortURLs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -129,9 +130,9 @@ func (_c *Usecases_CheckConnection_Call) RunAndReturn(run func(context.Context) 
 	return _c
 }
 
-// CreateShortURL provides a mock function with given fields: ctx, URL
-func (_m *Usecases) CreateShortURL(ctx context.Context, URL string) (*entity.ShortURL, error) {
-	ret := _m.Called(ctx, URL)
+// CreateShortURL provides a mock function with given fields: ctx, URL, UserUUID
+func (_m *Usecases) CreateShortURL(ctx context.Context, URL string, UserUUID string) (*entity.ShortURL, error) {
+	ret := _m.Called(ctx, URL, UserUUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateShortURL")
@@ -139,19 +140,19 @@ func (_m *Usecases) CreateShortURL(ctx context.Context, URL string) (*entity.Sho
 
 	var r0 *entity.ShortURL
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*entity.ShortURL, error)); ok {
-		return rf(ctx, URL)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*entity.ShortURL, error)); ok {
+		return rf(ctx, URL, UserUUID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *entity.ShortURL); ok {
-		r0 = rf(ctx, URL)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *entity.ShortURL); ok {
+		r0 = rf(ctx, URL, UserUUID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.ShortURL)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, URL)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, URL, UserUUID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -167,13 +168,14 @@ type Usecases_CreateShortURL_Call struct {
 // CreateShortURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - URL string
-func (_e *Usecases_Expecter) CreateShortURL(ctx interface{}, URL interface{}) *Usecases_CreateShortURL_Call {
-	return &Usecases_CreateShortURL_Call{Call: _e.mock.On("CreateShortURL", ctx, URL)}
+//   - UserUUID string
+func (_e *Usecases_Expecter) CreateShortURL(ctx interface{}, URL interface{}, UserUUID interface{}) *Usecases_CreateShortURL_Call {
+	return &Usecases_CreateShortURL_Call{Call: _e.mock.On("CreateShortURL", ctx, URL, UserUUID)}
 }
 
-func (_c *Usecases_CreateShortURL_Call) Run(run func(ctx context.Context, URL string)) *Usecases_CreateShortURL_Call {
+func (_c *Usecases_CreateShortURL_Call) Run(run func(ctx context.Context, URL string, UserUUID string)) *Usecases_CreateShortURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
 	return _c
 }
@@ -183,7 +185,7 @@ func (_c *Usecases_CreateShortURL_Call) Return(_a0 *entity.ShortURL, _a1 error) 
 	return _c
 }
 
-func (_c *Usecases_CreateShortURL_Call) RunAndReturn(run func(context.Context, string) (*entity.ShortURL, error)) *Usecases_CreateShortURL_Call {
+func (_c *Usecases_CreateShortURL_Call) RunAndReturn(run func(context.Context, string, string) (*entity.ShortURL, error)) *Usecases_CreateShortURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -243,6 +245,65 @@ func (_c *Usecases_GetShortURL_Call) Return(_a0 *entity.ShortURL, _a1 error) *Us
 }
 
 func (_c *Usecases_GetShortURL_Call) RunAndReturn(run func(context.Context, string) (*entity.ShortURL, error)) *Usecases_GetShortURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserShortURLs provides a mock function with given fields: ctx, userUUID
+func (_m *Usecases) GetUserShortURLs(ctx context.Context, userUUID string) ([]*entity.ShortURL, error) {
+	ret := _m.Called(ctx, userUUID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserShortURLs")
+	}
+
+	var r0 []*entity.ShortURL
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*entity.ShortURL, error)); ok {
+		return rf(ctx, userUUID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []*entity.ShortURL); ok {
+		r0 = rf(ctx, userUUID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.ShortURL)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userUUID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Usecases_GetUserShortURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserShortURLs'
+type Usecases_GetUserShortURLs_Call struct {
+	*mock.Call
+}
+
+// GetUserShortURLs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userUUID string
+func (_e *Usecases_Expecter) GetUserShortURLs(ctx interface{}, userUUID interface{}) *Usecases_GetUserShortURLs_Call {
+	return &Usecases_GetUserShortURLs_Call{Call: _e.mock.On("GetUserShortURLs", ctx, userUUID)}
+}
+
+func (_c *Usecases_GetUserShortURLs_Call) Run(run func(ctx context.Context, userUUID string)) *Usecases_GetUserShortURLs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Usecases_GetUserShortURLs_Call) Return(_a0 []*entity.ShortURL, _a1 error) *Usecases_GetUserShortURLs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Usecases_GetUserShortURLs_Call) RunAndReturn(run func(context.Context, string) ([]*entity.ShortURL, error)) *Usecases_GetUserShortURLs_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -15,7 +15,13 @@ func (h *Handlers) BatchCreateShortURLJSON(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	req := dto.ConvertBatchCreateRequest(batchCreateShortURLData)
-	resp, err := h.Usecases.BatchCreateShortURLs(ctx, req)
+
+	userUUID, ok := c.Get("userUUID").(string)
+	if !ok {
+		userUUID = ""
+	}
+
+	resp, err := h.Usecases.BatchCreateShortURLs(ctx, req, userUUID)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}

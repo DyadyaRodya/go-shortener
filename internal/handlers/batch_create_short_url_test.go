@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
@@ -95,9 +96,12 @@ func (h *handlersSuite) TestBatchCreateShortURLJSON() {
 			e := echo.New()
 			c := e.NewContext(test.request, w)
 
+			userUUID := gofakeit.UUID()
+			c.Set("userUUID", userUUID)
+
 			ctx := c.Request().Context()
 			if test.usecaseParam != nil && test.usecaseRes != nil {
-				h.usecases.EXPECT().BatchCreateShortURLs(ctx, test.usecaseParam).Return(test.usecaseRes.responses, test.usecaseRes.err).Once()
+				h.usecases.EXPECT().BatchCreateShortURLs(ctx, test.usecaseParam, userUUID).Return(test.usecaseRes.responses, test.usecaseRes.err).Once()
 			}
 
 			if h.NoError(h.handlers.BatchCreateShortURLJSON(c)) {

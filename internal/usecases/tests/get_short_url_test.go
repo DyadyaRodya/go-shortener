@@ -2,14 +2,14 @@ package tests
 
 import (
 	"context"
-	"errors"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 func (u *usecasesSuite) TestUsecases_GetShortURL_Success() {
 	ctx := context.Background()
-	id := "teststring"
-	shortURL := &entity.ShortURL{ID: id, URL: "http://test.url/blabla"}
+	id := gofakeit.Word()
+	shortURL := &entity.ShortURL{ID: id, URL: gofakeit.URL()}
 
 	u.urlStorage.EXPECT().GetURLByID(ctx, id).Return(shortURL, nil).Once()
 
@@ -21,7 +21,7 @@ func (u *usecasesSuite) TestUsecases_GetShortURL_Success() {
 
 func (u *usecasesSuite) TestUsecases_GetShortURL_NotFound() {
 	ctx := context.Background()
-	id := "teststring"
+	id := gofakeit.Word()
 
 	u.urlStorage.EXPECT().GetURLByID(ctx, id).Return(nil, entity.ErrShortURLNotFound).Once()
 
@@ -33,8 +33,8 @@ func (u *usecasesSuite) TestUsecases_GetShortURL_NotFound() {
 
 func (u *usecasesSuite) TestUsecases_GetShortURL_AnyError() {
 	ctx := context.Background()
-	id := "teststring"
-	otherError := errors.New("some other error")
+	id := gofakeit.Word()
+	otherError := gofakeit.Error()
 
 	u.urlStorage.EXPECT().GetURLByID(ctx, id).Return(nil, otherError).Once()
 

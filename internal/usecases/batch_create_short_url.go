@@ -10,6 +10,7 @@ import (
 func (u *Usecases) BatchCreateShortURLs(
 	ctx context.Context,
 	createRequests []*dto.BatchCreateRequest,
+	UserUUID string,
 ) ([]*dto.BatchCreateResponse, error) {
 	if len(createRequests) == 0 {
 		return []*dto.BatchCreateResponse{}, nil
@@ -27,8 +28,22 @@ func (u *Usecases) BatchCreateShortURLs(
 	}
 	defer tx.Rollback(ctx)
 
+	// ensure user exists
+	if UserUUID != "" {
+		err = tx.AddUserIfNotExists(ctx, UserUUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// check existing
 	existingShortURLs, err := tx.GetByURLs(ctx, originalURLs)
+	if err != nil {
+		return nil, err
+	}
+
+	// get urls owned by user
+	userURLs, err := tx.GetUserUrls(ctx, UserUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +77,12 @@ func (u *Usecases) BatchCreateShortURLs(
 				ID: id, URL: createRequest.OriginalURL,
 			}
 			err = tx.AddURL(ctx, shortURL)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if _, ok = userURLs[shortURL.URL]; !ok && UserUUID != "" {
+			err = tx.AddUserURL(ctx, shortURL.ID, UserUUID)
 			if err != nil {
 				return nil, err
 			}
