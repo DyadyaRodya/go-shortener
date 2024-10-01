@@ -30,7 +30,7 @@ func (u *Usecases) CreateShortURL(ctx context.Context, url string, UserUUID stri
 	}
 }
 
-// returns *entity.ShortURL and entity.ErrShortURLExists
+// returns *entity.ShortURL and entity.ErrShortURLExists if was not deleted
 func (u *Usecases) ensureUserLinkedToURL(ctx context.Context, url, userUUID string) (*entity.ShortURL, error) {
 	tx, err := u.urlStorage.Begin(ctx)
 	defer tx.Rollback(ctx)
@@ -38,12 +38,21 @@ func (u *Usecases) ensureUserLinkedToURL(ctx context.Context, url, userUUID stri
 		return nil, err
 	}
 
+	addCalled := false
+
+	retErr := entity.ErrShortURLExists
 	shortURL, err := tx.GetShortByURL(ctx, url)
 	if err != nil {
-		if errors.Is(err, entity.ErrShortURLNotFound) {
-			return nil, errors.New("unexpected to not find url")
+		if errors.Is(err, entity.ErrShortURLDeleted) {
+			err := tx.AddURL(ctx, shortURL, true) // allows uuid rewriting
+			if err != nil {
+				return nil, err
+			}
+			retErr = nil     // we recreated it
+			addCalled = true // to not forget tx.Commit()
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	userShortURLs, err := tx.GetUserUrls(ctx, userUUID)
@@ -52,7 +61,13 @@ func (u *Usecases) ensureUserLinkedToURL(ctx context.Context, url, userUUID stri
 	}
 	// check if user had url linked or userUUID not set (which means working without auth)
 	if _, ok := userShortURLs[shortURL.ID]; ok || userUUID == "" {
-		return shortURL, entity.ErrShortURLExists
+		if addCalled {
+			err = tx.Commit(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return shortURL, retErr
 	}
 
 	err = tx.AddUserIfNotExists(ctx, userUUID)
@@ -67,5 +82,5 @@ func (u *Usecases) ensureUserLinkedToURL(ctx context.Context, url, userUUID stri
 	if err != nil {
 		return nil, err
 	}
-	return shortURL, entity.ErrShortURLExists
+	return shortURL, retErr
 }

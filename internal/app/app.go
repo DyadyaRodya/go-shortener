@@ -12,6 +12,7 @@ import (
 	"github.com/DyadyaRodya/go-shortener/internal/repositories/inmemory"
 	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
+	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -52,13 +53,13 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 
 		base64Text := make([]byte, base64.URLEncoding.EncodedLen(len(secretKey)))
 		base64.URLEncoding.Encode(base64Text, secretKey)
-		appLogger.Info("New secret key", zap.ByteString("SECRET_KEY", base64Text))
+		appLogger.Debug("New secret key", zap.ByteString("SECRET_KEY", base64Text))
 	} else {
-		appLogger.Info("old secret key", zap.String("SECRET_KEY", secretKeyString))
+		appLogger.Debug("old secret key", zap.String("SECRET_KEY", secretKeyString))
 
 		secretKey = make([]byte, base64.URLEncoding.DecodedLen(len(secretKeyString))-1)
 		n, err := base64.URLEncoding.Decode(secretKey, []byte(secretKeyString))
-		appLogger.Info("after decoding secret key", zap.Int("n", n), zap.Error(err))
+		appLogger.Debug("after decoding secret key", zap.Int("n", n), zap.Error(err))
 	}
 
 	// init Echo
@@ -94,18 +95,33 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	// init usecases
 	u := usecases.NewUsecases(store, idGenerator)
 
+	// separate deleter into other routine
+	ctxDeleter := context.Background()
+	ctxDeleter, stopDeleter := context.WithCancel(ctxDeleter)
+	delChan := make(chan *dto.DeleteUserShortURLsRequest, 1024)
+	go u.UsersShortURLsDeleter(ctxDeleter, func(msg string) {
+		appLogger.Error(msg) // pass error logger function to log some errors
+	}, delChan)
+
 	// init handlers
-	h := handlers.NewHandlers(u, appConfig.HandlersConfig)
+	h := handlers.NewHandlers(u, appConfig.HandlersConfig, delChan)
 
 	// setup handlers for routes
 	setupRoutes(e, h)
+
+	// need to close all connections, channels and stop goroutines
+	closer := func() {
+		closeStorage()
+		stopDeleter()
+		close(delChan)
+	}
 
 	return &App{
 		appConfig:  appConfig,
 		e:          e,
 		appLogger:  appLogger,
 		appStorage: &store,
-		close:      closeStorage,
+		close:      closer,
 	}
 }
 

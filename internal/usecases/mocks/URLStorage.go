@@ -6,6 +6,8 @@ import (
 	context "context"
 
 	entity "github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	dto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
+
 	mock "github.com/stretchr/testify/mock"
 
 	usecases "github.com/DyadyaRodya/go-shortener/internal/usecases"
@@ -126,6 +128,67 @@ func (_c *URLStorage_Begin_Call) Return(_a0 usecases.Transaction, _a1 error) *UR
 }
 
 func (_c *URLStorage_Begin_Call) RunAndReturn(run func(context.Context) (usecases.Transaction, error)) *URLStorage_Begin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteUserURLs provides a mock function with given fields: ctx, requests
+func (_m *URLStorage) DeleteUserURLs(ctx context.Context, requests ...*dto.DeleteUserShortURLsRequest) error {
+	_va := make([]interface{}, len(requests))
+	for _i := range requests {
+		_va[_i] = requests[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteUserURLs")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, ...*dto.DeleteUserShortURLsRequest) error); ok {
+		r0 = rf(ctx, requests...)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// URLStorage_DeleteUserURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUserURLs'
+type URLStorage_DeleteUserURLs_Call struct {
+	*mock.Call
+}
+
+// DeleteUserURLs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - requests ...*dto.DeleteUserShortURLsRequest
+func (_e *URLStorage_Expecter) DeleteUserURLs(ctx interface{}, requests ...interface{}) *URLStorage_DeleteUserURLs_Call {
+	return &URLStorage_DeleteUserURLs_Call{Call: _e.mock.On("DeleteUserURLs",
+		append([]interface{}{ctx}, requests...)...)}
+}
+
+func (_c *URLStorage_DeleteUserURLs_Call) Run(run func(ctx context.Context, requests ...*dto.DeleteUserShortURLsRequest)) *URLStorage_DeleteUserURLs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]*dto.DeleteUserShortURLsRequest, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(*dto.DeleteUserShortURLsRequest)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *URLStorage_DeleteUserURLs_Call) Return(_a0 error) *URLStorage_DeleteUserURLs_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *URLStorage_DeleteUserURLs_Call) RunAndReturn(run func(context.Context, ...*dto.DeleteUserShortURLsRequest) error) *URLStorage_DeleteUserURLs_Call {
 	_c.Call.Return(run)
 	return _c
 }

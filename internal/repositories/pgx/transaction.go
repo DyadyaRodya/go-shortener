@@ -2,6 +2,7 @@ package pgx
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
@@ -26,7 +27,7 @@ func (t *TransactionPGX) Rollback(ctx context.Context) error {
 }
 
 func (t *TransactionPGX) GetByURLs(ctx context.Context, URLs []string) (map[string]*entity.ShortURL, error) {
-	rows, err := t.tx.Query(ctx, `SELECT uuid, url FROM short_urls WHERE url = ANY($1)`, URLs)
+	rows, err := t.tx.Query(ctx, `SELECT uuid, url FROM short_urls WHERE url = ANY($1) AND deleted_at IS NULL`, URLs)
 	if err != nil {
 		t.logger.Error("Failed to query database", zap.Error(err))
 		return nil, fmt.Errorf("error in TransactionPGX.GetByURLs: %w", err)
@@ -49,7 +50,7 @@ func (t *TransactionPGX) GetByURLs(ctx context.Context, URLs []string) (map[stri
 }
 
 func (t *TransactionPGX) CheckIDs(ctx context.Context, IDs []string) ([]string, error) {
-	rows, err := t.tx.Query(ctx, `SELECT uuid FROM short_urls WHERE uuid = ANY($1)`, IDs)
+	rows, err := t.tx.Query(ctx, `SELECT uuid FROM short_urls WHERE uuid = ANY($1) AND deleted_at IS NULL`, IDs)
 	if err != nil {
 		t.logger.Error("Failed to query database", zap.Error(err))
 		return nil, fmt.Errorf("error in TransactionPGX.GetByIDs: %w", err)
@@ -71,9 +72,16 @@ func (t *TransactionPGX) CheckIDs(ctx context.Context, IDs []string) ([]string, 
 	return takenIDs, nil
 }
 
-func (t *TransactionPGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL) error {
+func (t *TransactionPGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL, force bool) error {
 	t.logger.Debug("Adding URL", zap.Any("ShortURL", ShortURL))
-	ct, err := t.tx.Exec(ctx, `INSERT INTO short_urls (uuid, url) VALUES (@uuid, @url)`,
+	var query string
+	if force {
+		query = `INSERT INTO short_urls (uuid, url) VALUES (@uuid, @url) 
+				     ON CONFLICT (uuid) DO UPDATE SET deleted_at = NULL, url = @url` // allow uuid rewriting
+	} else {
+		query = `INSERT INTO short_urls (uuid, url) VALUES (@uuid, @url)`
+	}
+	ct, err := t.tx.Exec(ctx, query,
 		pgx.NamedArgs{"uuid": ShortURL.ID, "url": ShortURL.URL})
 
 	var pgErr *pgconn.PgError
@@ -181,8 +189,10 @@ func (t *TransactionPGX) GetShortByURL(ctx context.Context, URL string) (*entity
 	t.logger.Debug("Getting Short URL by full URL", zap.String("URL", URL))
 
 	var uuid string
-	err := t.tx.QueryRow(ctx, `SELECT uuid FROM short_urls WHERE url = @url`, pgx.NamedArgs{"url": URL}).
-		Scan(&uuid)
+	var deletedAt sql.NullTime
+	err := t.tx.QueryRow(ctx, `SELECT uuid, deleted_at FROM short_urls WHERE url = @url`,
+		pgx.NamedArgs{"url": URL},
+	).Scan(&uuid, &deletedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, entity.ErrShortURLNotFound
@@ -190,5 +200,10 @@ func (t *TransactionPGX) GetShortByURL(ctx context.Context, URL string) (*entity
 		t.logger.Error("Failed to get Short URL by full URL", zap.String("URL", URL), zap.Error(err))
 		return nil, err
 	}
-	return &entity.ShortURL{URL: URL, ID: uuid}, nil
+
+	shortURL := &entity.ShortURL{URL: URL, ID: uuid}
+	if !deletedAt.Valid {
+		return shortURL, nil
+	}
+	return shortURL, entity.ErrShortURLDeleted
 }

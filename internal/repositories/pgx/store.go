@@ -2,10 +2,13 @@ package pgx
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
+	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
+	"github.com/DyadyaRodya/go-shortener/pkg/itemsets"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -32,7 +35,8 @@ func (s *StorePGX) InitSchema(ctx context.Context) error {
 	s.logger.Info("Creating table `short_urls`")
 	_, err = tx.Exec(ctx, `CREATE TABLE IF NOT EXISTS short_urls (
         uuid CHAR(8) NOT NULL PRIMARY KEY, 
-        url TEXT UNIQUE NOT NULL
+        url TEXT UNIQUE NOT NULL,
+        deleted_at TIMESTAMPTZ NULL DEFAULT NULL
     )`)
 	if err != nil {
 		s.logger.Error("Failed to create table `short_urls`", zap.Error(err))
@@ -158,7 +162,7 @@ func (s *StorePGX) LoadUsersURLs(ctx context.Context, src map[string][]string) e
 func (s *StorePGX) URLs(ctx context.Context) (*map[string]string, error) {
 	dst := make(map[string]string)
 
-	rows, err := s.pool.Query(ctx, `SELECT uuid, url FROM short_urls`)
+	rows, err := s.pool.Query(ctx, `SELECT uuid, url FROM short_urls WHERE deleted_at IS NULL`)
 	if err != nil {
 		s.logger.Error("Failed to query database StorePGX.URLs", zap.Error(err))
 		return nil, err
@@ -221,9 +225,9 @@ func (s *StorePGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL, OwnerU
 	}
 	defer tx.Rollback(ctx)
 
-	if err := tx.AddURL(ctx, ShortURL); err != nil {
+	if err := tx.AddURL(ctx, ShortURL, false); err != nil {
 		err = fmt.Errorf("StorePGX.AddURL: %w", err)
-		s.logger.Error("Failed to add URL in StorePGX.AddURL", zap.Error(err))
+		s.logger.Info("Failed to add URL in StorePGX.AddURL", zap.Error(err))
 		return err
 	}
 
@@ -253,8 +257,9 @@ func (s *StorePGX) GetURLByID(ctx context.Context, ID string) (*entity.ShortURL,
 	s.logger.Debug("Getting URL by ID", zap.String("ID", ID))
 
 	var url string
-	err := s.pool.QueryRow(ctx, `SELECT url FROM short_urls WHERE uuid = @uuid`, pgx.NamedArgs{"uuid": ID}).
-		Scan(&url)
+	var deletedAt sql.NullTime
+	err := s.pool.QueryRow(ctx, `SELECT url, deleted_at FROM short_urls WHERE uuid = @uuid`, pgx.NamedArgs{"uuid": ID}).
+		Scan(&url, &deletedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, entity.ErrShortURLNotFound
@@ -262,7 +267,11 @@ func (s *StorePGX) GetURLByID(ctx context.Context, ID string) (*entity.ShortURL,
 		s.logger.Error("Failed to get URL by ID", zap.String("ID", ID), zap.Error(err))
 		return nil, err
 	}
-	return &entity.ShortURL{URL: url, ID: ID}, nil
+	shortURL := &entity.ShortURL{URL: url, ID: ID}
+	if !deletedAt.Valid {
+		return shortURL, nil
+	}
+	return shortURL, entity.ErrShortURLDeleted
 }
 
 func (s *StorePGX) Begin(ctx context.Context) (usecases.Transaction, error) {
@@ -292,4 +301,56 @@ func (s *StorePGX) GetUserUrls(ctx context.Context, UserUUID string) (map[string
 	}
 
 	return res, nil
+}
+
+func (s *StorePGX) DeleteUserURLs(ctx context.Context, requests ...*dto.DeleteUserShortURLsRequest) error {
+	s.logger.Debug("StorePGX.DeleteUserURLs", zap.Any("requests", requests))
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		s.logger.Error("Failed to begin transaction StorePGX.DeleteUserURLs", zap.Error(err))
+		return fmt.Errorf("StorePGX.DeleteUserURLs: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	toDelete := make([]string, 0)
+
+	deleteQuery := `DELETE FROM users_short_urls WHERE user_uuid = $1 AND short_url_uuid = ANY($2)`
+	for _, request := range requests {
+		if request.UserUUID == "" {
+			continue
+		}
+		ct, err := tx.Exec(ctx, deleteQuery, request.UserUUID, request.ShortURLUUIDs)
+
+		if err != nil {
+			s.logger.Info("Failed to delete from users_short_urls",
+				zap.String("user_uuid", request.UserUUID),
+				zap.Any("short_url_uuids", request.ShortURLUUIDs),
+				zap.Error(err))
+			return fmt.Errorf("StorePGX.DeleteUserURLs: %w", err)
+		}
+
+		if ct.Delete() { // deleted some links - can be last owner
+			toDelete = itemsets.AddItems(toDelete, request.ShortURLUUIDs)
+		}
+	}
+	_, err = tx.Exec(ctx, `UPDATE short_urls AS su SET deleted_at=now() 
+                        				WHERE su.uuid = ANY($1) AND NOT EXISTS(
+                        				SELECT 1 FROM users_short_urls AS usu WHERE usu.short_url_uuid=su.uuid
+                        				                                      )`,
+		toDelete)
+
+	if err != nil {
+		s.logger.Info("Failed to update short_urls with deleted_at = now()",
+			zap.Any("short_url_uuids", toDelete),
+			zap.Error(err))
+		return fmt.Errorf("StorePGX.DeleteUserURLs: %w", err)
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		s.logger.Error("Failed to commit transaction in StorePGX.DeleteUserURLs", zap.Error(err))
+		return fmt.Errorf("StorePGX.DeleteUserURLs: %w", err)
+	}
+	return nil
 }

@@ -22,17 +22,17 @@ func (_m *Transaction) EXPECT() *Transaction_Expecter {
 	return &Transaction_Expecter{mock: &_m.Mock}
 }
 
-// AddURL provides a mock function with given fields: ctx, ShortURL
-func (_m *Transaction) AddURL(ctx context.Context, ShortURL *entity.ShortURL) error {
-	ret := _m.Called(ctx, ShortURL)
+// AddURL provides a mock function with given fields: ctx, ShortURL, force
+func (_m *Transaction) AddURL(ctx context.Context, ShortURL *entity.ShortURL, force bool) error {
+	ret := _m.Called(ctx, ShortURL, force)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddURL")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.ShortURL) error); ok {
-		r0 = rf(ctx, ShortURL)
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.ShortURL, bool) error); ok {
+		r0 = rf(ctx, ShortURL, force)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -48,13 +48,14 @@ type Transaction_AddURL_Call struct {
 // AddURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ShortURL *entity.ShortURL
-func (_e *Transaction_Expecter) AddURL(ctx interface{}, ShortURL interface{}) *Transaction_AddURL_Call {
-	return &Transaction_AddURL_Call{Call: _e.mock.On("AddURL", ctx, ShortURL)}
+//   - force bool
+func (_e *Transaction_Expecter) AddURL(ctx interface{}, ShortURL interface{}, force interface{}) *Transaction_AddURL_Call {
+	return &Transaction_AddURL_Call{Call: _e.mock.On("AddURL", ctx, ShortURL, force)}
 }
 
-func (_c *Transaction_AddURL_Call) Run(run func(ctx context.Context, ShortURL *entity.ShortURL)) *Transaction_AddURL_Call {
+func (_c *Transaction_AddURL_Call) Run(run func(ctx context.Context, ShortURL *entity.ShortURL, force bool)) *Transaction_AddURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*entity.ShortURL))
+		run(args[0].(context.Context), args[1].(*entity.ShortURL), args[2].(bool))
 	})
 	return _c
 }
@@ -64,7 +65,7 @@ func (_c *Transaction_AddURL_Call) Return(_a0 error) *Transaction_AddURL_Call {
 	return _c
 }
 
-func (_c *Transaction_AddURL_Call) RunAndReturn(run func(context.Context, *entity.ShortURL) error) *Transaction_AddURL_Call {
+func (_c *Transaction_AddURL_Call) RunAndReturn(run func(context.Context, *entity.ShortURL, bool) error) *Transaction_AddURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

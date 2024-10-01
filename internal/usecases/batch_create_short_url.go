@@ -76,7 +76,7 @@ func (u *Usecases) BatchCreateShortURLs(
 			shortURL = &entity.ShortURL{
 				ID: id, URL: createRequest.OriginalURL,
 			}
-			err = tx.AddURL(ctx, shortURL)
+			err = tx.AddURL(ctx, shortURL, true) // we will rewrite free uuids
 			if err != nil {
 				return nil, err
 			}

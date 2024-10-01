@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
+	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
+	"github.com/DyadyaRodya/go-shortener/pkg/itemsets"
 	"maps"
 	"slices"
 	"sync"
@@ -87,6 +89,9 @@ func (s *StoreInMemory) Begin(_ context.Context) (usecases.Transaction, error) {
 }
 
 func (s *StoreInMemory) GetUserUrls(_ context.Context, UserUUID string) (map[string]*entity.ShortURL, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	result := make(map[string]*entity.ShortURL)
 
 	owns, ok := s.usersShortUrls[UserUUID]
@@ -101,4 +106,36 @@ func (s *StoreInMemory) GetUserUrls(_ context.Context, UserUUID string) (map[str
 		}
 	}
 	return result, nil
+}
+
+func (s *StoreInMemory) DeleteUserURLs(_ context.Context, requests ...*dto.DeleteUserShortURLsRequest) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	toDelete := make([]string, 0)
+
+	for _, request := range requests {
+		if request.UserUUID == "" {
+			continue
+		}
+		if owns, ok := s.usersShortUrls[request.UserUUID]; ok {
+			inter := itemsets.Intersection(owns, request.ShortURLUUIDs)
+			s.usersShortUrls[request.UserUUID] = itemsets.RemoveItems(owns, inter)
+			toDelete = itemsets.AddItems(toDelete, inter)
+		}
+	}
+
+	for _, uuid := range toDelete {
+		found := false
+		for _, owns := range s.usersShortUrls {
+			if slices.Contains(owns, uuid) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			delete(s.urls, uuid) // do not support deletion mark for memory and file
+		}
+	}
+	return nil
 }

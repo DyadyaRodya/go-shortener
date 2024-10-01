@@ -26,12 +26,14 @@ type (
 	Handlers struct {
 		Usecases Usecases
 		Config   *Config
+		DelChan  chan *usecasesdto.DeleteUserShortURLsRequest
 	}
 )
 
-func NewHandlers(usecases Usecases, config *Config) *Handlers {
+func NewHandlers(usecases Usecases, config *Config, DelChan chan *usecasesdto.DeleteUserShortURLsRequest) *Handlers {
 	return &Handlers{
 		Usecases: usecases,
 		Config:   config,
+		DelChan:  DelChan,
 	}
 }

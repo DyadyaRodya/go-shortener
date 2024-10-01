@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
 type (
@@ -12,7 +13,7 @@ type (
 		GetShortByURL(ctx context.Context, URL string) (*entity.ShortURL, error)
 		GetByURLs(ctx context.Context, URLs []string) (map[string]*entity.ShortURL, error)
 		CheckIDs(ctx context.Context, IDs []string) ([]string, error)
-		AddURL(ctx context.Context, ShortURL *entity.ShortURL) error
+		AddURL(ctx context.Context, ShortURL *entity.ShortURL, force bool) error
 		AddUserIfNotExists(ctx context.Context, UserUUID string) error
 		AddUserURL(ctx context.Context, ShortURLUUID, UserUUID string) error
 		GetUserUrls(ctx context.Context, UserUUID string) (map[string]*entity.ShortURL, error)
@@ -23,6 +24,7 @@ type (
 		GetURLByID(ctx context.Context, ID string) (*entity.ShortURL, error)
 		AddURL(ctx context.Context, ShortURL *entity.ShortURL, OwnerUUID string) error
 		GetUserUrls(ctx context.Context, UserUUID string) (map[string]*entity.ShortURL, error)
+		DeleteUserURLs(ctx context.Context, requests ...*dto.DeleteUserShortURLsRequest) error
 
 		Begin(ctx context.Context) (Transaction, error)
 	}

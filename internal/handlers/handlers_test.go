@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	handlersMocks "github.com/DyadyaRodya/go-shortener/internal/handlers/mocks"
+	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 	"github.com/stretchr/testify/suite"
 	"reflect"
 	"testing"
@@ -23,7 +24,9 @@ func (h *handlersSuite) SetupTest() {
 	h.usecases = handlersMocks.NewUsecases(t)
 	h.config = &Config{BaseShortURL: "http://test.example.com"}
 
-	h.handlers = NewHandlers(h.usecases, h.config)
+	delChan := make(chan *usecasesdto.DeleteUserShortURLsRequest, 1024)
+
+	h.handlers = NewHandlers(h.usecases, h.config, delChan)
 }
 
 func TestRunHandlersSuite(t *testing.T) {
@@ -31,8 +34,10 @@ func TestRunHandlersSuite(t *testing.T) {
 }
 
 func (h *handlersSuite) TestNewHandlers() {
-	expected := &Handlers{h.usecases, h.config}
-	if got := NewHandlers(h.usecases, h.config); !reflect.DeepEqual(got, expected) {
+	delChan := make(chan *usecasesdto.DeleteUserShortURLsRequest, 1024)
+
+	expected := &Handlers{h.usecases, h.config, delChan}
+	if got := NewHandlers(h.usecases, h.config, delChan); !reflect.DeepEqual(got, expected) {
 		h.Errorf(errors.New("NewHandlers error"), "NewHandlers() = %v, want %v", got, expected)
 	}
 }

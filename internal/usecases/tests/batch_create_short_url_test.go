@@ -87,7 +87,7 @@ func (u *usecasesSuite) TestUsecases_BatchCreateShortURLs_Success() {
 	tx.EXPECT().AddUserURL(ctx, existedShortURL.ID, userUUID).Return(nil).Once()
 
 	// created new short url
-	tx.EXPECT().AddURL(ctx, shortURL).Return(nil).Once()
+	tx.EXPECT().AddURL(ctx, shortURL, true).Return(nil).Once()
 
 	// link to user
 	tx.EXPECT().AddUserURL(ctx, shortURL.ID, userUUID).Return(nil).Once()

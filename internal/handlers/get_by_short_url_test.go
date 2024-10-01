@@ -51,6 +51,19 @@ func (h *handlersSuite) TestGetShortURL() {
 				headers: nil,
 			},
 		},
+		{
+			name:         "Deleted",
+			request:      httptest.NewRequest(http.MethodGet, "/10abcdef", nil),
+			usecaseParam: "10abcdef",
+			usecaseRes: &usecaseResult{
+				shortURL: nil,
+				err:      entity.ErrShortURLDeleted,
+			},
+			want: want{
+				code:    http.StatusGone,
+				headers: nil,
+			},
+		},
 	}
 
 	for _, test := range tests {

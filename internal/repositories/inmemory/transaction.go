@@ -47,13 +47,13 @@ func (t *TransactionInMemory) CheckIDs(_ context.Context, IDs []string) ([]strin
 	return result, nil
 }
 
-func (t *TransactionInMemory) AddURL(_ context.Context, ShortURL *entity.ShortURL) error {
-	_, ok := t.buf[ShortURL.ID]
-	if ok {
+func (t *TransactionInMemory) AddURL(_ context.Context, ShortURL *entity.ShortURL, force bool) error {
+	oldURL, ok := t.buf[ShortURL.ID]
+	if ok && !force {
 		return entity.ErrUUIDTaken
 	}
 	for _, url := range t.buf {
-		if url == ShortURL.URL {
+		if url == ShortURL.URL && url != oldURL {
 			return entity.ErrShortURLExists
 		}
 	}
