@@ -17,6 +17,7 @@ mockery:
 mock:
 	make mockery name=Usecases dir=./internal/handlers
 
+	make mockery name=Transaction dir=./internal/usecases
 	make mockery name=URLStorage dir=./internal/usecases
 	make mockery name=IDGenerator dir=./internal/usecases
 

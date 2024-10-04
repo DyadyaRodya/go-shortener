@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
@@ -62,20 +63,42 @@ func (h *handlersSuite) TestCreateShortURL() {
 				response: "",
 			},
 		},
+		{
+			name:         "ShortURL_exists",
+			request:      httptest.NewRequest(http.MethodPost, "/", strings.NewReader("http://full.url.com/test")),
+			contentType:  "text/plain; charset=utf-8",
+			usecaseParam: "http://full.url.com/test",
+			usecaseRes: &usecaseResult{
+				shortURL: &entity.ShortURL{
+					ID:  "10abcdef",
+					URL: "http://full.url.com/test",
+				},
+				err: entity.ErrShortURLExists,
+			},
+			want: want{
+				code:        http.StatusConflict,
+				response:    h.config.BaseShortURL + "/10abcdef",
+				contentType: "text/plain; charset=UTF-8",
+			},
+		},
 	}
 
 	for _, test := range tests {
 		h.Run(test.name, func() {
-			if test.usecaseParam != "" && test.usecaseRes != nil {
-				h.usecases.EXPECT().CreateShortURL(test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
-			}
-
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 
 			test.request.Header.Set("Content-Type", test.contentType)
 			e := echo.New()
 			c := e.NewContext(test.request, w)
+
+			userUUID := gofakeit.UUID()
+			c.Set("userUUID", userUUID)
+
+			ctx := c.Request().Context()
+			if test.usecaseParam != "" && test.usecaseRes != nil {
+				h.usecases.EXPECT().CreateShortURL(ctx, test.usecaseParam, userUUID).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
+			}
 
 			if h.NoError(h.handlers.CreateShortURL(c)) {
 				// проверяем код ответа
@@ -146,20 +169,42 @@ func (h *handlersSuite) TestCreateShortURLJSON() {
 				response: "",
 			},
 		},
+		{
+			name:         "ShortURL_exists",
+			request:      httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(`{"url":"http://full.url.com/test"}`)),
+			contentType:  "application/json; charset=utf-8",
+			usecaseParam: "http://full.url.com/test",
+			usecaseRes: &usecaseResult{
+				shortURL: &entity.ShortURL{
+					ID:  "10abcdef",
+					URL: "http://full.url.com/test",
+				},
+				err: entity.ErrShortURLExists,
+			},
+			want: want{
+				code:        http.StatusConflict,
+				response:    `{"result":"` + h.config.BaseShortURL + "/10abcdef" + `"}`,
+				contentType: "application/json",
+			},
+		},
 	}
 
 	for _, test := range tests {
 		h.Run(test.name, func() {
-			if test.usecaseParam != "" && test.usecaseRes != nil {
-				h.usecases.EXPECT().CreateShortURL(test.usecaseParam).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
-			}
-
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 
 			test.request.Header.Set("Content-Type", test.contentType)
 			e := echo.New()
 			c := e.NewContext(test.request, w)
+
+			userUUID := gofakeit.UUID()
+			c.Set("userUUID", userUUID)
+
+			ctx := c.Request().Context()
+			if test.usecaseParam != "" && test.usecaseRes != nil {
+				h.usecases.EXPECT().CreateShortURL(ctx, test.usecaseParam, userUUID).Return(test.usecaseRes.shortURL, test.usecaseRes.err).Once()
+			}
 
 			if h.NoError(h.handlers.CreateShortURLJSON(c)) {
 				// проверяем код ответа

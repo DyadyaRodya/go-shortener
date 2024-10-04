@@ -2,20 +2,24 @@ package app
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
+	"crypto/rand"
+	"encoding/base64"
+	"github.com/DyadyaRodya/go-shortener/internal/auth"
 	"github.com/DyadyaRodya/go-shortener/internal/config"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/services"
 	"github.com/DyadyaRodya/go-shortener/internal/handlers"
 	"github.com/DyadyaRodya/go-shortener/internal/logger"
 	"github.com/DyadyaRodya/go-shortener/internal/repositories/inmemory"
+	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
+	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
-	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -23,7 +27,8 @@ type App struct {
 	appConfig  *config.Config
 	e          *echo.Echo
 	appLogger  *zap.Logger
-	appStorage *inmemory.StoreInMemory
+	appStorage *usecases.URLStorage
+	close      func()
 }
 
 func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultStorageFile string) *App {
@@ -41,42 +46,90 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 
 	appLogger.Info("Config", zap.Any("config", appConfig))
 
+	secretKeyString := os.Getenv("SECRET_KEY")
+	var secretKey []byte
+	if secretKeyString == "" {
+		secretKey = newSecretKey(32)
+
+		base64Text := make([]byte, base64.URLEncoding.EncodedLen(len(secretKey)))
+		base64.URLEncoding.Encode(base64Text, secretKey)
+		appLogger.Debug("New secret key", zap.ByteString("SECRET_KEY", base64Text))
+	} else {
+		appLogger.Debug("old secret key", zap.String("SECRET_KEY", secretKeyString))
+
+		secretKey = make([]byte, base64.URLEncoding.DecodedLen(len(secretKeyString))-1)
+		n, err := base64.URLEncoding.Decode(secretKey, []byte(secretKeyString))
+		appLogger.Debug("after decoding secret key", zap.Int("n", n), zap.Error(err))
+	}
+
 	// init Echo
 	e := echo.New()
+
+	var uuid4Generator auth.UUIDGenerator = services.NewUUID4Generator()
 
 	// Middleware
 	e.Use(loggerMW)
 	e.Use(NewGZIPMiddleware())
 	e.Use(middleware.Recover())
+	e.Use(auth.NewAuthJWTMiddleware(&uuid4Generator, secretKey))
 
 	// init services
 	idGenerator := services.NewIDGenerator()
 
 	// init storage
-	store := inmemory.NewStoreInMemory()
-
+	var closeStorage func()
+	var store usecases.URLStorage
+	if appConfig.DSN == "" {
+		s := inmemory.NewStoreInMemory()
+		store = s
+		closeStorage = func() {}
+	} else {
+		pool, err := pgxpool.New(context.Background(), appConfig.DSN)
+		if err != nil {
+			appLogger.Fatal("Cannot create connection pool to database", zap.String("DSN", appConfig.DSN), zap.Error(err))
+		}
+		closeStorage = pool.Close
+		s := pgxrepo.NewStorePGX(pool, appLogger)
+		store = s
+	}
 	// init usecases
 	u := usecases.NewUsecases(store, idGenerator)
 
+	// separate deleter into other routine
+	ctxDeleter := context.Background()
+	ctxDeleter, stopDeleter := context.WithCancel(ctxDeleter)
+	delChan := make(chan *dto.DeleteUserShortURLsRequest, 1024)
+	go u.UsersShortURLsDeleter(ctxDeleter, func(msg string) {
+		appLogger.Error(msg) // pass error logger function to log some errors
+	}, delChan)
+
 	// init handlers
-	h := handlers.NewHandlers(u, appConfig.HandlersConfig)
+	h := handlers.NewHandlers(u, appConfig.HandlersConfig, delChan)
 
 	// setup handlers for routes
 	setupRoutes(e, h)
+
+	// need to close all connections, channels and stop goroutines
+	closer := func() {
+		closeStorage()
+		stopDeleter()
+		close(delChan)
+	}
 
 	return &App{
 		appConfig:  appConfig,
 		e:          e,
 		appLogger:  appLogger,
-		appStorage: store,
+		appStorage: &store,
+		close:      closer,
 	}
 }
 
 func (a *App) Run() error {
-	a.appLogger.Info("Reading file storage", zap.String("path", a.appConfig.StorageFile))
+	a.appLogger.Info("Initializing storage and reading file", zap.String("path", a.appConfig.StorageFile))
 	err := a.readInitData()
 	if err != nil {
-		a.appLogger.Error("Reading file storage error",
+		a.appLogger.Error("Initializing storage or reading file error",
 			zap.String("path", a.appConfig.StorageFile),
 			zap.Error(err),
 		)
@@ -84,7 +137,7 @@ func (a *App) Run() error {
 	}
 	a.appLogger.Info("Starting server at", zap.String("address", a.appConfig.ServerAddress))
 	err = a.e.Start(a.appConfig.ServerAddress)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "http: Server closed") {
 		a.appLogger.Error("Starting error", zap.Error(err))
 		return err
 	}
@@ -92,43 +145,39 @@ func (a *App) Run() error {
 }
 
 func (a *App) Shutdown(signal os.Signal) error {
+	defer a.close()
+
+	ctx := context.Background()
 	a.appLogger.Info("Stopped server on signal", zap.String("signal", signal.String()))
-	file, err := os.OpenFile(a.appConfig.StorageFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		return nil
+
+	if a.appConfig.StorageFile != "" {
+		switch v := (*a.appStorage).(type) {
+		case *inmemory.StoreInMemory:
+			err := a.saveFromStoreInMemory(v)
+			if err != nil {
+				return err
+			}
+		case *pgxrepo.StorePGX:
+			err := a.saveFromStorePGX(ctx, v)
+			if err != nil {
+				return err
+			}
+		default:
+
+		}
 	}
 
-	defer file.Close()
-
-	err = json.NewEncoder(file).Encode(a.appStorage.Storage())
-	if err != nil {
-		return err
-	}
-
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelFunc()
-	err = a.e.Shutdown(ctx)
+	err := a.e.Shutdown(ctx)
 	return err
 }
 
-func (a *App) readInitData() error {
-	file, err := os.OpenFile(a.appConfig.StorageFile, os.O_RDONLY|os.O_CREATE, 0666)
+func newSecretKey(size int) []byte {
+	secretKey := make([]byte, size)
+	_, err := rand.Read(secretKey)
 	if err != nil {
-		return err
+		panic(err)
 	}
-
-	defer file.Close()
-
-	err = json.NewDecoder(file).Decode(a.appStorage.Storage())
-	if err != nil && !errors.Is(err, io.EOF) {
-		return err
-	}
-
-	if err != nil {
-		a.appLogger.Info("Empty storage file")
-	} else {
-		a.appLogger.Info("Storage file successfully read")
-	}
-
-	return nil
+	return secretKey
 }
