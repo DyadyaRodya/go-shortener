@@ -20,6 +20,7 @@ func (t *TransactionInMemory) Commit(_ context.Context) error {
 }
 
 func (t *TransactionInMemory) Rollback(_ context.Context) error {
+	t.lock.TryLock() // after commit it can be unlocked
 	t.lock.Unlock()
 	return nil
 }

@@ -26,7 +26,7 @@ func (h *Handlers) DeleteUserShortURLs(c echo.Context) error {
 		UserUUID:      userUUID,
 		ShortURLUUIDs: ids,
 	}
-	h.DelChan <- req
+	go func() { h.DelChan <- req }()
 
 	return c.NoContent(http.StatusAccepted)
 }

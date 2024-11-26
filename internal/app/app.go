@@ -113,6 +113,9 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	closer := func() {
 		closeStorage()
 		stopDeleter()
+		for range delChan {
+
+		}
 		close(delChan)
 	}
 

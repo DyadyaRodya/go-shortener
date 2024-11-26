@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"time"
 )
 
 func (h *handlersSuite) TestDeleteUserShortURLs() {
@@ -76,7 +77,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 						h.Equal(usecasesdto.DeleteUserShortURLsRequest{
 							UserUUID: test.userUUID, ShortURLUUIDs: []string{"10abcdef"},
 						}, *data)
-					default:
+					case <-time.After(1 * time.Second): // to let data appear in chan
 						h.Fail("No data in h.handlers.DelChan")
 					}
 				} else {
@@ -84,7 +85,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 					case data := <-h.handlers.DelChan:
 						h.Failf("data in h.handlers.DelChan, but not expected",
 							"data in h.handlers.DelChan, but not expected: %+v", *data)
-					default:
+					case <-time.After(1 * time.Second): // to let data appear in chan
 						// ok
 					}
 				}
