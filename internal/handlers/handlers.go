@@ -7,6 +7,7 @@ import (
 	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
+// Handlers interfaces
 type (
 	Usecases interface {
 		CheckConnection(ctx context.Context) error
@@ -23,14 +24,20 @@ type (
 	Config struct {
 		BaseShortURL string
 	}
-
-	Handlers struct {
-		Usecases Usecases
-		Config   *Config
-		DelChan  chan *usecasesdto.DeleteUserShortURLsRequest
-	}
 )
 
+// Handlers
+// @title URL Shortener API
+// @version 0.1
+// @description URL Shortener API OpenAPI
+// @termsOfService http://swagger.io/terms/
+type Handlers struct {
+	Usecases Usecases
+	Config   *Config
+	DelChan  chan *usecasesdto.DeleteUserShortURLsRequest
+}
+
+// NewHandlers constructor for Handlers
 func NewHandlers(usecases Usecases, config *Config, DelChan chan *usecasesdto.DeleteUserShortURLsRequest) *Handlers {
 	return &Handlers{
 		Usecases: usecases,

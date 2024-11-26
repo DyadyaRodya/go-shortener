@@ -11,6 +11,7 @@ import (
 	"github.com/DyadyaRodya/go-shortener/pkg/jsonfile"
 )
 
+// StoreBuf buffer for reading data from file
 type StoreBuf struct {
 	URLs           *map[string]string   `json:"urls"`
 	UsersShortUrls *map[string][]string `json:"usersShortUrls"`

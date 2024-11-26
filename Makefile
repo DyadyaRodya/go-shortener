@@ -5,6 +5,9 @@ install_bin: # install binary dependencies
 	mkdir -p $(LOCAL_BIN)
 	GOBIN=$(LOCAL_BIN) go mod tidy
 	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v2@latest
+	GOBIN=$(LOCAL_BIN) go install golang.org/x/tools/cmd/goimports@latest
+	GOBIN=$(LOCAL_BIN) go install golang.org/x/tools/cmd/godoc@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/swaggo/swag/cmd/swag@latest
 
 .PHONY: install
 install: install_bin
@@ -23,6 +26,7 @@ mock:
 
 .PHONY: lint
 lint: # run statictest
+	$(LOCAL_BIN)/goimports -local "github.com/DyadyaRodya/go-shortener" -w cmd internal pkg
 	go vet -vettool=/usr/bin/statictest ./...
 
 .PHONY: tests
@@ -76,3 +80,8 @@ test-iter: # run test for iteration
 .PHONY: test-all
 test-all: # run test for all iterations
 	shortenertestbeta -test.v -test.run=^TestIteration -binary-path=cmd/shortener/shortener
+
+
+.PHONY: swagger
+swagger: # generate swagger
+	$(LOCAL_BIN)/swag init --pd --dir internal/handlers --generalInfo handlers.go

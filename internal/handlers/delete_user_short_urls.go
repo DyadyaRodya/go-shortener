@@ -9,6 +9,17 @@ import (
 	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
+// DeleteUserShortURLs godoc
+// @Summary      Delete user short URLs
+// @Description  Delete user short URLs
+// @Tags         Info
+// @Accept       json
+// @Param        Cookie header string  false "auth"     default(auth=xxx)
+// @Param        request   body      []string true "Delete user short URLs request"
+// @Success      202
+// @Failure      400
+// @Failure      401
+// @Router       /api/user/urls [delete]
 func (h *Handlers) DeleteUserShortURLs(c echo.Context) error {
 	ids, errorResponse := dto.IDsFromContext(c)
 	if errorResponse != nil {

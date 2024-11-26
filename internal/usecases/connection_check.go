@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// CheckConnection checks readiness of storage connection.
 func (u *Usecases) CheckConnection(ctx context.Context) error {
 	err := u.urlStorage.TestConnection(ctx)
 	if err != nil {

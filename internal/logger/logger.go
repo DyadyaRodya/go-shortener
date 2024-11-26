@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Initialize Prepares logger with provided log level and middleware for logging requests.
 func Initialize(level string) (*zap.Logger, echo.MiddlewareFunc, error) {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {

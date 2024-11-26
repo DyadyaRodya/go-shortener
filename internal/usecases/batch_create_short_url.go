@@ -8,6 +8,10 @@ import (
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
+// BatchCreateShortURLs creates short URLs for provided request and links them to user.
+//
+// Creates short IDs for new URLs. Existing URLs are only linked to user.
+// All existing URLs already linked to user are also presented in return.
 func (u *Usecases) BatchCreateShortURLs(
 	ctx context.Context,
 	createRequests []*dto.BatchCreateRequest,

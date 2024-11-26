@@ -6,6 +6,7 @@ import (
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
+// GetUserShortURLs reads all user short URLs
 func (u *Usecases) GetUserShortURLs(ctx context.Context, userUUID string) ([]*entity.ShortURL, error) {
 	shortURLs, err := u.urlStorage.GetUserUrls(ctx, userUUID)
 	if err != nil {

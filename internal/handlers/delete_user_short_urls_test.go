@@ -27,7 +27,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 	}{
 		{
 			name: "Success",
-			request: httptest.NewRequest(http.MethodDelete, "/api/shorten/batch",
+			request: httptest.NewRequest(http.MethodDelete, "/api/user/urls",
 				strings.NewReader(`["10abcdef"]`)),
 			contentType: "application/json; charset=utf-8",
 			authorized:  true,
@@ -38,7 +38,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 		},
 		{
 			name: "Bad_id",
-			request: httptest.NewRequest(http.MethodDelete, "/api/shorten/batch",
+			request: httptest.NewRequest(http.MethodDelete, "/api/user/urls",
 				strings.NewReader(`["blablablabla"]`)),
 			contentType: "application/json; charset=utf-8",
 			want: want{
@@ -47,7 +47,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 		},
 		{
 			name: "Not_json",
-			request: httptest.NewRequest(http.MethodDelete, "/api/shorten/batch",
+			request: httptest.NewRequest(http.MethodDelete, "/api/user/urls",
 				strings.NewReader("10abcdef")),
 			contentType: "text/plain",
 			want: want{

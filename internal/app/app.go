@@ -25,6 +25,7 @@ import (
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
+// App Main structure for shortener service
 type App struct {
 	appConfig  *config.Config
 	e          *echo.Echo
@@ -33,6 +34,13 @@ type App struct {
 	close      func()
 }
 
+// NewApp Creates new *App for shortener service.
+//
+// Reads config, generates keys if needed,
+// initialize structures, setup handlers, middlewares,
+// routes, and starts deleter goroutine.
+//
+// Does not start server for handling requests
 func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultStorageFile string) *App {
 	// init configs
 	appConfig := config.InitConfigFromCMD(DefaultServerAddress, DefaultBaseShortURL, DefaultLogLevel, DefaultStorageFile)
@@ -130,6 +138,9 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	}
 }
 
+// Run Starts App server for handling requests.
+//
+// Reads init data from file if provided in config, loads it to storage
 func (a *App) Run() error {
 	a.appLogger.Info("Initializing storage and reading file", zap.String("path", a.appConfig.StorageFile))
 	err := a.readInitData()
@@ -149,6 +160,9 @@ func (a *App) Run() error {
 	return nil
 }
 
+// Shutdown Graceful shutdown of running server.
+//
+// Stops serving requests, saves data from storage to file if provided. Stops deleter goroutine, closes chan.
 func (a *App) Shutdown(signal os.Signal) error {
 	defer a.close()
 

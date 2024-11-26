@@ -9,6 +9,16 @@ import (
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 )
 
+// GetUserShortURLs godoc
+// @Summary      Get user short URLs for full URLs
+// @Description  Get user short URLs for full URLs
+// @Tags         Info
+// @Produce      json
+// @Param        Cookie header string  false "auth"     default(auth=xxx)
+// @Success      200  {array} dto.ShortURLData
+// @Success      204
+// @Failure      401
+// @Router       /api/user/urls [get]
 func (h *Handlers) GetUserShortURLs(c echo.Context) error {
 	authorized, ok := c.Get("authorized").(bool)
 	if !ok || !authorized {

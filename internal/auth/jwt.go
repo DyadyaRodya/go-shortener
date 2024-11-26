@@ -15,15 +15,24 @@ const (
 	ttl        = time.Hour * 0
 )
 
+// Claims custom JWT claims
 type Claims struct {
 	jwt.RegisteredClaims
 	UserUUID string
 }
 
+// UUIDGenerator interface
 type UUIDGenerator interface {
 	Generate() (string, error)
 }
 
+// NewAuthJWTMiddleware provides middleware that checks user cookies.
+//
+// If auth cookie set it checks signature of JWT and extracts user UUID.
+//
+// If auth cookie not set or cookie verification failed it generates new user UUID.
+//
+// Updates auth cookie JWT before next handler call to keep session alive.
 func NewAuthJWTMiddleware(uuidGenerator *UUIDGenerator, secretKey []byte) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

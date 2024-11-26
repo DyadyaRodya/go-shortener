@@ -4,10 +4,15 @@ import (
 	"net/http/pprof"
 	"strings"
 
+	echoSwagger "github.com/swaggo/echo-swagger"
+
 	"github.com/labstack/echo/v4"
 
 	"github.com/DyadyaRodya/go-shortener/internal/handlers"
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
+
+	//nolint:blank-imports // for swagger
+	_ "github.com/DyadyaRodya/go-shortener/docs"
 )
 
 const (
@@ -28,6 +33,8 @@ func setupRoutes(e *echo.Echo, handlers *handlers.Handlers) {
 	e.GET(apiGetUserURLs, handlers.GetUserShortURLs)
 	e.DELETE(apiDeleteUserURLs, handlers.DeleteUserShortURLs)
 	e.GET(pingURL, handlers.PingHandler)
+
+	e.GET("/docs/swagger/*", echoSwagger.WrapHandler)
 
 	Wrap(e)
 }

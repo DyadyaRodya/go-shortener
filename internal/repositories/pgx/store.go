@@ -16,15 +16,18 @@ import (
 	"github.com/DyadyaRodya/go-shortener/pkg/itemsets"
 )
 
+// StorePGX Repository for postgres with pgx pools and transactions to store users ShortURLs
 type StorePGX struct {
 	pool   *pgxpool.Pool
 	logger *zap.Logger
 }
 
+// NewStorePGX constructor for StorePGX
 func NewStorePGX(pool *pgxpool.Pool, logger *zap.Logger) *StorePGX {
 	return &StorePGX{pool: pool, logger: logger}
 }
 
+// InitSchema create tables and constrains
 func (s *StorePGX) InitSchema(ctx context.Context) error {
 	s.logger.Info("Initializing schema")
 	tx, err := s.pool.Begin(ctx)
@@ -73,6 +76,7 @@ func (s *StorePGX) InitSchema(ctx context.Context) error {
 	return nil
 }
 
+// LoadURLs loads shortURLs
 func (s *StorePGX) LoadURLs(ctx context.Context, src map[string]string) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -105,6 +109,7 @@ func (s *StorePGX) LoadURLs(ctx context.Context, src map[string]string) error {
 	return err
 }
 
+// LoadUsersURLs add users and links users to their ShortURLs
 func (s *StorePGX) LoadUsersURLs(ctx context.Context, src map[string][]string) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -161,6 +166,7 @@ func (s *StorePGX) LoadUsersURLs(ctx context.Context, src map[string][]string) e
 	return err
 }
 
+// URLs get all pairs of ID and full URL
 func (s *StorePGX) URLs(ctx context.Context) (*map[string]string, error) {
 	dst := make(map[string]string)
 
@@ -187,6 +193,7 @@ func (s *StorePGX) URLs(ctx context.Context) (*map[string]string, error) {
 	return &dst, nil
 }
 
+// UsersURLs get lists of urls by users
 func (s *StorePGX) UsersURLs(ctx context.Context) (*map[string][]string, error) {
 	dst := make(map[string][]string)
 
@@ -213,11 +220,13 @@ func (s *StorePGX) UsersURLs(ctx context.Context) (*map[string][]string, error) 
 	return &dst, nil
 }
 
+// TestConnection allows to ping DB end check the readiness of the service
 func (s *StorePGX) TestConnection(ctx context.Context) error {
 	s.logger.Debug("Pinging database")
 	return s.pool.Ping(ctx)
 }
 
+// AddURL performs a query transaction in one database call. Adds new user *entity.ShortURL and links it to user
 func (s *StorePGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL, OwnerUUID string) error {
 	tx, err := s.Begin(ctx)
 	if err != nil {
@@ -255,6 +264,7 @@ func (s *StorePGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL, OwnerU
 	return nil
 }
 
+// GetURLByID performs a query transaction in one database call. Returns *entity.ShortURL for ID
 func (s *StorePGX) GetURLByID(ctx context.Context, ID string) (*entity.ShortURL, error) {
 	s.logger.Debug("Getting URL by ID", zap.String("ID", ID))
 
@@ -276,6 +286,7 @@ func (s *StorePGX) GetURLByID(ctx context.Context, ID string) (*entity.ShortURL,
 	return shortURL, entity.ErrShortURLDeleted
 }
 
+// Begin starts new TransactionPGX session for StorePGX
 func (s *StorePGX) Begin(ctx context.Context) (usecases.Transaction, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -286,6 +297,8 @@ func (s *StorePGX) Begin(ctx context.Context) (usecases.Transaction, error) {
 	return txPGX, nil
 }
 
+// GetUserUrls performs a query transaction in one database call.
+// Returns map[string]*entity.ShortURL where key is full URL and value is *entity.ShortURL linked to user UUID.
 func (s *StorePGX) GetUserUrls(ctx context.Context, UserUUID string) (map[string]*entity.ShortURL, error) {
 	tx, err := s.Begin(ctx)
 	if err != nil {
@@ -305,6 +318,9 @@ func (s *StorePGX) GetUserUrls(ctx context.Context, UserUUID string) (map[string
 	return res, nil
 }
 
+// DeleteUserURLs performs a query transaction in one database call. Unlinks URLs and users.
+//
+// Removes URLs that are not linked to any other users.
 func (s *StorePGX) DeleteUserURLs(ctx context.Context, requests ...*dto.DeleteUserShortURLsRequest) error {
 	s.logger.Debug("StorePGX.DeleteUserURLs", zap.Any("requests", requests))
 
