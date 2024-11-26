@@ -1,10 +1,12 @@
 package handlers
 
 import (
-	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/url"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 )
 
 func (h *Handlers) GetUserShortURLs(c echo.Context) error {

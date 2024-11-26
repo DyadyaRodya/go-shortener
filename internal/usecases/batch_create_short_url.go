@@ -2,9 +2,10 @@ package usecases
 
 import (
 	"context"
+	"slices"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"slices"
 )
 
 func (u *Usecases) BatchCreateShortURLs(

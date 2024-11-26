@@ -1,13 +1,15 @@
 package handlers
 
 import (
-	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/labstack/echo/v4"
+
+	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
 func (h *handlersSuite) TestDeleteUserShortURLs() {

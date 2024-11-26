@@ -1,10 +1,11 @@
 package logger
 
 import (
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"time"
 )
 
 func Initialize(level string) (*zap.Logger, echo.MiddlewareFunc, error) {

@@ -2,13 +2,14 @@ package inmemory
 
 import (
 	"context"
+	"maps"
+	"slices"
+	"sync"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 	"github.com/DyadyaRodya/go-shortener/pkg/itemsets"
-	"maps"
-	"slices"
-	"sync"
 )
 
 type StoreInMemory struct {

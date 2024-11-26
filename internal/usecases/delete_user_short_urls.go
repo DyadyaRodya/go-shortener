@@ -3,8 +3,9 @@ package usecases
 import (
 	"context"
 	"fmt"
-	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 	"time"
+
+	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
 type DeleterErrorLogger func(msg string)

@@ -1,10 +1,12 @@
 package tests
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+
 	usecases2 "github.com/DyadyaRodya/go-shortener/internal/usecases"
 	usecasesMocks "github.com/DyadyaRodya/go-shortener/internal/usecases/mocks"
-	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type usecasesSuite struct {

@@ -2,10 +2,12 @@ package tests
 
 import (
 	"context"
-	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
-	"github.com/DyadyaRodya/go-shortener/internal/usecases/mocks"
+
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"github.com/DyadyaRodya/go-shortener/internal/usecases/mocks"
 )
 
 func (u *usecasesSuite) TestUsecases_CreateShortURL_Success() {

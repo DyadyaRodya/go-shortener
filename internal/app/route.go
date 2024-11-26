@@ -1,11 +1,13 @@
 package app
 
 import (
-	"github.com/DyadyaRodya/go-shortener/internal/handlers"
-	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
-	"github.com/labstack/echo/v4"
 	"net/http/pprof"
 	"strings"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/DyadyaRodya/go-shortener/internal/handlers"
+	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 )
 
 const (

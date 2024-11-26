@@ -2,10 +2,12 @@ package dto
 
 import (
 	"encoding/json"
-	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/labstack/echo/v4"
 	"net/url"
 	"slices"
+
+	"github.com/labstack/echo/v4"
+
+	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
 type BatchCreateDataRequest struct {

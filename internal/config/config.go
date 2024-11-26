@@ -2,8 +2,9 @@ package config
 
 import (
 	"flag"
-	"github.com/DyadyaRodya/go-shortener/internal/handlers"
 	"os"
+
+	"github.com/DyadyaRodya/go-shortener/internal/handlers"
 )
 
 type Config struct {

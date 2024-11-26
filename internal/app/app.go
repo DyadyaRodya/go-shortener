@@ -4,6 +4,16 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"log"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
+
 	"github.com/DyadyaRodya/go-shortener/internal/auth"
 	"github.com/DyadyaRodya/go-shortener/internal/config"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/services"
@@ -13,14 +23,6 @@ import (
 	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"go.uber.org/zap"
-	"log"
-	"os"
-	"strings"
-	"time"
 )
 
 type App struct {

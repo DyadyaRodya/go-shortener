@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"strings"
+
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
-	"strings"
+
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
 type TransactionPGX struct {

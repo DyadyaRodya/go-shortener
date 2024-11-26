@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (h *Handlers) DeleteUserShortURLs(c echo.Context) error {

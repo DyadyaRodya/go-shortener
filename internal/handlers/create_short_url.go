@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"errors"
-	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
-	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/url"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 )
 
 func (h *Handlers) CreateShortURL(c echo.Context) error {

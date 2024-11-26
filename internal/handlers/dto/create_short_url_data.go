@@ -2,10 +2,11 @@ package dto
 
 import (
 	"encoding/json"
-	"github.com/labstack/echo/v4"
 	"io"
 	"net/url"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 type CreateShortURLDataRequest struct {

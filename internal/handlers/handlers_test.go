@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"errors"
-	handlersMocks "github.com/DyadyaRodya/go-shortener/internal/handlers/mocks"
-	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/stretchr/testify/suite"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
+
+	handlersMocks "github.com/DyadyaRodya/go-shortener/internal/handlers/mocks"
+	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
 type handlersSuite struct {

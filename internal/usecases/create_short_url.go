@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"errors"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 

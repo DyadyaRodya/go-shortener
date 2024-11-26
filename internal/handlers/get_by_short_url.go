@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"errors"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
-	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (h *Handlers) GetByShortURL(c echo.Context) error {

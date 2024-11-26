@@ -2,6 +2,14 @@ package tests
 
 import (
 	"context"
+	"strconv"
+	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/DyadyaRodya/go-shortener/internal/config"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/services"
@@ -9,12 +17,6 @@ import (
 	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"strconv"
-	"testing"
 )
 
 func BenchmarkBatchCreateShortURLsWithDB(b *testing.B) {

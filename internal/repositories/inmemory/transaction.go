@@ -2,8 +2,9 @@ package inmemory
 
 import (
 	"context"
-	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"slices"
+
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
 type TransactionInMemory struct {

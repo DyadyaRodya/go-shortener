@@ -2,6 +2,7 @@ package dto
 
 import (
 	"encoding/hex"
+
 	"github.com/labstack/echo/v4"
 )
 

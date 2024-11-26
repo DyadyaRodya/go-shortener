@@ -2,10 +2,12 @@ package tests
 
 import (
 	"context"
+
+	"github.com/brianvoe/gofakeit/v6"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/mocks"
-	"github.com/brianvoe/gofakeit/v6"
 )
 
 func (u *usecasesSuite) TestUsecases_BatchCreateShortURLs_Success() {

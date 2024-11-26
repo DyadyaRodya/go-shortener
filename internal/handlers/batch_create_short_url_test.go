@@ -1,14 +1,16 @@
 package handlers
 
 import (
-	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
-	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/labstack/echo/v4"
+
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
 func (h *handlersSuite) TestBatchCreateShortURLJSON() {

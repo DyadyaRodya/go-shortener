@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
