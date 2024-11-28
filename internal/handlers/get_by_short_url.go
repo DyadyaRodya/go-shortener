@@ -2,12 +2,25 @@ package handlers
 
 import (
 	"errors"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
-	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
+// GetByShortURL godoc
+// @Summary      Get full URL for short URL
+// @Description  Get full URL for short URL
+// @Tags         Info
+// @Param        Cookie header string  false "auth"     default(auth=xxx)
+// @Param        id   path     string  true "short URL ID"
+// @Success      307
+// @Header       307  {string} Location "Full URL"
+// @Failure      400
+// @Failure      410
+// @Router       /{id} [get]
 func (h *Handlers) GetByShortURL(c echo.Context) error {
 	getShortURLData, errorResponse := dto.GetShortURLDataFromContext(c)
 	if errorResponse != nil {

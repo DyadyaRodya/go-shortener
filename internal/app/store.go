@@ -3,13 +3,15 @@ package app
 import (
 	"context"
 	"errors"
+	"io"
+	"time"
+
 	"github.com/DyadyaRodya/go-shortener/internal/repositories/inmemory"
 	"github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/pkg/jsonfile"
-	"io"
-	"time"
 )
 
+// StoreBuf buffer for reading data from file
 type StoreBuf struct {
 	URLs           *map[string]string   `json:"urls"`
 	UsersShortUrls *map[string][]string `json:"usersShortUrls"`

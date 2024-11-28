@@ -5,27 +5,37 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
+	"strings"
+
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
-	"strings"
+
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
+// TransactionPGX storage transaction (session)
 type TransactionPGX struct {
 	tx     pgx.Tx
 	logger *zap.Logger
 }
 
+// Commit finishes storage Transaction by commiting changes.
 func (t *TransactionPGX) Commit(ctx context.Context) error {
 	return t.tx.Commit(ctx)
 }
 
+// Rollback finishes storage Transaction by changes cancellation.
+// Should be called in defer part in case of errors. It is safe to call it after Commit.
 func (t *TransactionPGX) Rollback(ctx context.Context) error {
 	return t.tx.Rollback(ctx)
 }
 
+// GetByURLs performs query as part of Transaction.
+//
+// Reads map[string]*entity.ShortURL where key is full URL and value is *entity.ShortURL.
+// If full URL not found it won't be presented in result.
 func (t *TransactionPGX) GetByURLs(ctx context.Context, URLs []string) (map[string]*entity.ShortURL, error) {
 	rows, err := t.tx.Query(ctx, `SELECT uuid, url FROM short_urls WHERE url = ANY($1) AND deleted_at IS NULL`, URLs)
 	if err != nil {
@@ -49,6 +59,7 @@ func (t *TransactionPGX) GetByURLs(ctx context.Context, URLs []string) (map[stri
 	return shortURLs, nil
 }
 
+// CheckIDs performs query as part of Transaction. Allows to check short IDs, returns taken IDs.
 func (t *TransactionPGX) CheckIDs(ctx context.Context, IDs []string) ([]string, error) {
 	rows, err := t.tx.Query(ctx, `SELECT uuid FROM short_urls WHERE uuid = ANY($1) AND deleted_at IS NULL`, IDs)
 	if err != nil {
@@ -72,6 +83,7 @@ func (t *TransactionPGX) CheckIDs(ctx context.Context, IDs []string) ([]string, 
 	return takenIDs, nil
 }
 
+// AddURL performs query as part of Transaction. Adds new *entity.ShortURL.
 func (t *TransactionPGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL, force bool) error {
 	t.logger.Debug("Adding URL", zap.Any("ShortURL", ShortURL))
 	var query string
@@ -112,6 +124,7 @@ func (t *TransactionPGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL, 
 	return nil
 }
 
+// AddUserIfNotExists performs query as part of Transaction. Ensures user with UserUUID exists in storage.
 func (t *TransactionPGX) AddUserIfNotExists(ctx context.Context, UserUUID string) error {
 	t.logger.Debug("Adding User", zap.String("UserUUID", UserUUID))
 	ct, err := t.tx.Exec(ctx, `INSERT INTO users (uuid) VALUES (@uuid) ON CONFLICT DO NOTHING`,
@@ -132,6 +145,7 @@ func (t *TransactionPGX) AddUserIfNotExists(ctx context.Context, UserUUID string
 	return nil
 }
 
+// AddUserURL performs query as part of Transaction. Links short URL ID to user
 func (t *TransactionPGX) AddUserURL(ctx context.Context, ShortURLUUID, UserUUID string) error {
 	t.logger.Debug("Adding User",
 		zap.String("UserUUID", UserUUID),
@@ -159,6 +173,8 @@ func (t *TransactionPGX) AddUserURL(ctx context.Context, ShortURLUUID, UserUUID 
 	return nil
 }
 
+// GetUserUrls performs query as part of Transaction.
+// Returns map[string]*entity.ShortURL where key is full URL and value is *entity.ShortURL linked to user UUID.
 func (t *TransactionPGX) GetUserUrls(ctx context.Context, UserUUID string) (map[string]*entity.ShortURL, error) {
 	rows, err := t.tx.Query(ctx, `SELECT uuid, url FROM short_urls AS su 
 		JOIN users_short_urls AS usu ON su.uuid=usu.short_url_uuid 				
@@ -185,6 +201,7 @@ func (t *TransactionPGX) GetUserUrls(ctx context.Context, UserUUID string) (map[
 	return shortURLs, nil
 }
 
+// GetShortByURL performs query as part of Transaction. Reads *entity.ShortURL if exists for full URL.
 func (t *TransactionPGX) GetShortByURL(ctx context.Context, URL string) (*entity.ShortURL, error) {
 	t.logger.Debug("Getting Short URL by full URL", zap.String("URL", URL))
 

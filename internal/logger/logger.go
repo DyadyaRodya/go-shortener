@@ -1,12 +1,14 @@
 package logger
 
 import (
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"time"
 )
 
+// Initialize Prepares logger with provided log level and middleware for logging requests.
 func Initialize(level string) (*zap.Logger, echo.MiddlewareFunc, error) {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {

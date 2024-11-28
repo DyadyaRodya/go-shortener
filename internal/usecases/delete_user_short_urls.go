@@ -3,12 +3,20 @@ package usecases
 import (
 	"context"
 	"fmt"
-	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 	"time"
+
+	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
+// DeleterErrorLogger function for error logging
 type DeleterErrorLogger func(msg string)
 
+// UsersShortURLsDeleter reads provided delChan chan *dto.DeleteUserShortURLsRequest once per 10 seconds
+// and executes batch delete for URLs.
+//
+// Unlinks URL from user in request and removes all URLs that are not linked to any users.
+//
+// In case of failure it writes URLs back to channel to retry later.
 func (u *Usecases) UsersShortURLsDeleter(
 	ctx context.Context,
 	errorLogger DeleterErrorLogger,

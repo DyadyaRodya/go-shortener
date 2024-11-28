@@ -12,14 +12,17 @@ import (
 	"strings"
 )
 
+// RequestMaker interface for making requests with different content types
 type RequestMaker interface {
 	Make(long string) *http.Request
 }
 
+// JSONRequestMaker example json
 type JSONRequestMaker struct {
 	gzip bool
 }
 
+// Make json request
 func (m JSONRequestMaker) Make(long string) *http.Request {
 	endpoint := "http://localhost:8080/api/shorten"
 	// пишем запрос
@@ -65,10 +68,12 @@ func (m JSONRequestMaker) Make(long string) *http.Request {
 	return request
 }
 
+// TextRequestMaker plain example
 type TextRequestMaker struct {
 	gzip bool
 }
 
+// Make plain request
 func (m TextRequestMaker) Make(long string) *http.Request {
 	endpoint := "http://localhost:8080/"
 	// пишем запрос

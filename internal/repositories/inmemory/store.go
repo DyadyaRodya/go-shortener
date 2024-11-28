@@ -2,21 +2,24 @@ package inmemory
 
 import (
 	"context"
+	"maps"
+	"slices"
+	"sync"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 	"github.com/DyadyaRodya/go-shortener/pkg/itemsets"
-	"maps"
-	"slices"
-	"sync"
 )
 
+// StoreInMemory stores urls and users in process RAM
 type StoreInMemory struct {
 	urls           map[string]string
 	usersShortUrls map[string][]string
 	lock           sync.RWMutex
 }
 
+// NewStoreInMemory constructor for StoreInMemory
 func NewStoreInMemory() *StoreInMemory {
 	return &StoreInMemory{
 		urls:           make(map[string]string),
@@ -25,14 +28,17 @@ func NewStoreInMemory() *StoreInMemory {
 	}
 }
 
+// URLS get all pairs of ID and full URL
 func (s *StoreInMemory) URLS() *map[string]string {
 	return &s.urls
 }
 
+// UsersShortUrls get lists of urls by users
 func (s *StoreInMemory) UsersShortUrls() *map[string][]string {
 	return &s.usersShortUrls
 }
 
+// AddURL performs a query transaction in one database call. Adds new user *entity.ShortURL and links it to user
 func (s *StoreInMemory) AddURL(_ context.Context, ShortURL *entity.ShortURL, OwnerUUID string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -56,6 +62,7 @@ func (s *StoreInMemory) AddURL(_ context.Context, ShortURL *entity.ShortURL, Own
 	return nil
 }
 
+// GetURLByID performs a query transaction in one database call. Returns *entity.ShortURL for ID
 func (s *StoreInMemory) GetURLByID(_ context.Context, ID string) (*entity.ShortURL, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -72,10 +79,12 @@ func (s *StoreInMemory) GetURLByID(_ context.Context, ID string) (*entity.ShortU
 	return shortURL, nil
 }
 
+// TestConnection allows to ping DB end check the readiness of the service
 func (s *StoreInMemory) TestConnection(_ context.Context) error {
 	return nil
 }
 
+// Begin starts new TransactionInMemory session for StoreInMemory
 func (s *StoreInMemory) Begin(_ context.Context) (usecases.Transaction, error) {
 	buf := make(map[string]string)
 	bufOwns := make(map[string][]string)
@@ -88,6 +97,8 @@ func (s *StoreInMemory) Begin(_ context.Context) (usecases.Transaction, error) {
 	return tx, nil
 }
 
+// GetUserUrls performs a query transaction in one database call.
+// Returns map[string]*entity.ShortURL where key is full URL and value is *entity.ShortURL linked to user UUID.
 func (s *StoreInMemory) GetUserUrls(_ context.Context, UserUUID string) (map[string]*entity.ShortURL, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -108,6 +119,9 @@ func (s *StoreInMemory) GetUserUrls(_ context.Context, UserUUID string) (map[str
 	return result, nil
 }
 
+// DeleteUserURLs performs a query transaction in one database call. Unlinks URLs and users.
+//
+// Removes URLs that are not linked to any other users.
 func (s *StoreInMemory) DeleteUserURLs(_ context.Context, requests ...*dto.DeleteUserShortURLsRequest) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()

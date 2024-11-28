@@ -1,10 +1,12 @@
 package handlers
 
 import (
-	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
 func (h *handlersSuite) TestGetShortURL() {

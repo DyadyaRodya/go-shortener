@@ -3,9 +3,14 @@ package usecases
 import (
 	"context"
 	"errors"
+
 	"github.com/DyadyaRodya/go-shortener/internal/domain/entity"
 )
 
+// CreateShortURL creates new short ID for URL and links it to user.
+//
+// Creates short ID for new URL. Existing URL are only linked to user.
+// Existing URL already linked to user are also presented in return, but error marks that conflict.
 func (u *Usecases) CreateShortURL(ctx context.Context, url string, UserUUID string) (*entity.ShortURL, error) {
 	var id string
 	var err error

@@ -30,6 +30,23 @@ make test-iter NUMBER=${ITER_NUMBER}
 make test-all
 ```
 
+### Benchmark
+Base:
+```shell
+cd internal/usecases/tests/
+go test -bench=BenchmarkBatchCreateShortURLsWithDB -run=internal/usecases/tests/ . -benchmem -memprofile=../../../profiles/base.pprof
+go tool pprof -http=":9090"  tests.test ../../../profiles/base.pprof
+```
+Result
+```shell
+cd internal/usecases/tests/
+go test -bench=BenchmarkBatchCreateShortURLsWithDB -run=internal/usecases/tests/ . -benchmem -memprofile=../../../profiles/result.pprof
+go tool pprof -http=":9090"  tests.test ../../../profiles/result.pprof
+
+pprof -top -diff_base=profiles/base.pprof profiles/result.pprof
+```
+
+
 ### Дополнительные команды
 
 Для генерации моков

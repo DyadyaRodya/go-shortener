@@ -1,12 +1,15 @@
 package handlers
 
 import (
-	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/labstack/echo/v4"
+
+	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
 func (h *handlersSuite) TestDeleteUserShortURLs() {
@@ -24,7 +27,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 	}{
 		{
 			name: "Success",
-			request: httptest.NewRequest(http.MethodDelete, "/api/shorten/batch",
+			request: httptest.NewRequest(http.MethodDelete, "/api/user/urls",
 				strings.NewReader(`["10abcdef"]`)),
 			contentType: "application/json; charset=utf-8",
 			authorized:  true,
@@ -35,7 +38,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 		},
 		{
 			name: "Bad_id",
-			request: httptest.NewRequest(http.MethodDelete, "/api/shorten/batch",
+			request: httptest.NewRequest(http.MethodDelete, "/api/user/urls",
 				strings.NewReader(`["blablablabla"]`)),
 			contentType: "application/json; charset=utf-8",
 			want: want{
@@ -44,7 +47,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 		},
 		{
 			name: "Not_json",
-			request: httptest.NewRequest(http.MethodDelete, "/api/shorten/batch",
+			request: httptest.NewRequest(http.MethodDelete, "/api/user/urls",
 				strings.NewReader("10abcdef")),
 			contentType: "text/plain",
 			want: want{
@@ -76,7 +79,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 						h.Equal(usecasesdto.DeleteUserShortURLsRequest{
 							UserUUID: test.userUUID, ShortURLUUIDs: []string{"10abcdef"},
 						}, *data)
-					default:
+					case <-time.After(1 * time.Second): // to let data appear in chan
 						h.Fail("No data in h.handlers.DelChan")
 					}
 				} else {
@@ -84,7 +87,7 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 					case data := <-h.handlers.DelChan:
 						h.Failf("data in h.handlers.DelChan, but not expected",
 							"data in h.handlers.DelChan, but not expected: %+v", *data)
-					default:
+					case <-time.After(1 * time.Second): // to let data appear in chan
 						// ok
 					}
 				}

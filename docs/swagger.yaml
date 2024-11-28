@@ -1,0 +1,235 @@
+definitions:
+  dto.BatchCreateDataRequest:
+    properties:
+      correlation_id:
+        type: string
+      original_url:
+        type: string
+    type: object
+  dto.BatchCreateDataResponse:
+    properties:
+      correlation_id:
+        type: string
+      short_url:
+        type: string
+    type: object
+  dto.CreateShortURLDataRequest:
+    properties:
+      url:
+        type: string
+    type: object
+  dto.CreateShortURLDataResponse:
+    properties:
+      result:
+        type: string
+    type: object
+  dto.ShortURLData:
+    properties:
+      original_url:
+        type: string
+      short_url:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: URL Shortener API OpenAPI
+  termsOfService: http://swagger.io/terms/
+  title: URL Shortener API
+  version: "0.1"
+paths:
+  /:
+    post:
+      consumes:
+      - text/plain
+      description: Create short URL for full URL
+      parameters:
+      - default: auth=xxx
+        description: auth
+        in: header
+        name: Cookie
+        type: string
+      - description: Create short URL request
+        in: body
+        name: request
+        required: true
+        schema:
+          type: string
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+        "409":
+          description: Conflict
+          schema:
+            type: string
+      summary: Create short URL for full URL
+      tags:
+      - Info
+  /{id}:
+    get:
+      description: Get full URL for short URL
+      parameters:
+      - default: auth=xxx
+        description: auth
+        in: header
+        name: Cookie
+        type: string
+      - description: short URL ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "307":
+          description: Temporary Redirect
+          headers:
+            Location:
+              description: Full URL
+              type: string
+        "400":
+          description: Bad Request
+        "410":
+          description: Gone
+      summary: Get full URL for short URL
+      tags:
+      - Info
+  /api/shorten:
+    post:
+      consumes:
+      - application/json
+      description: Create short URL for full URL
+      parameters:
+      - default: auth=xxx
+        description: auth
+        in: header
+        name: Cookie
+        type: string
+      - description: Create short URL request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateShortURLDataRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.CreateShortURLDataResponse'
+        "400":
+          description: Bad Request
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.CreateShortURLDataResponse'
+      summary: Create short URL for full URL
+      tags:
+      - Info
+  /api/shorten/batch:
+    post:
+      consumes:
+      - application/json
+      description: Batch create short URLs for full URLs
+      parameters:
+      - default: auth=xxx
+        description: auth
+        in: header
+        name: Cookie
+        type: string
+      - description: Batch create short URLs request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BatchCreateDataRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/dto.BatchCreateDataResponse'
+            type: array
+        "400":
+          description: Bad Request
+      summary: Batch create short URLs for full URLs
+      tags:
+      - Info
+  /api/user/urls:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user short URLs
+      parameters:
+      - default: auth=xxx
+        description: auth
+        in: header
+        name: Cookie
+        type: string
+      - description: Delete user short URLs request
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+      summary: Delete user short URLs
+      tags:
+      - Info
+    get:
+      description: Get user short URLs for full URLs
+      parameters:
+      - default: auth=xxx
+        description: auth
+        in: header
+        name: Cookie
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.ShortURLData'
+            type: array
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+      summary: Get user short URLs for full URLs
+      tags:
+      - Info
+  /ping:
+    get:
+      description: Check server readiness
+      parameters:
+      - default: auth=xxx
+        description: auth
+        in: header
+        name: Cookie
+        type: string
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: Check server readiness
+      tags:
+      - Debug
+swagger: "2.0"

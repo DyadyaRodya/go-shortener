@@ -1,12 +1,25 @@
 package handlers
 
 import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+
 	"github.com/DyadyaRodya/go-shortener/internal/handlers/dto"
 	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
+// DeleteUserShortURLs godoc
+// @Summary      Delete user short URLs
+// @Description  Delete user short URLs
+// @Tags         Info
+// @Accept       json
+// @Param        Cookie header string  false "auth"     default(auth=xxx)
+// @Param        request   body      []string true "Delete user short URLs request"
+// @Success      202
+// @Failure      400
+// @Failure      401
+// @Router       /api/user/urls [delete]
 func (h *Handlers) DeleteUserShortURLs(c echo.Context) error {
 	ids, errorResponse := dto.IDsFromContext(c)
 	if errorResponse != nil {
@@ -26,7 +39,7 @@ func (h *Handlers) DeleteUserShortURLs(c echo.Context) error {
 		UserUUID:      userUUID,
 		ShortURLUUIDs: ids,
 	}
-	h.DelChan <- req
+	go func() { h.DelChan <- req }()
 
 	return c.NoContent(http.StatusAccepted)
 }

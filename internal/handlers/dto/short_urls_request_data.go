@@ -3,9 +3,11 @@ package dto
 import (
 	"encoding/hex"
 	"encoding/json"
+
 	"github.com/labstack/echo/v4"
 )
 
+// IDsFromContext Extracts hex short URLs IDs slice from JSON body array
 func IDsFromContext(c echo.Context) ([]string, *ErrorResponse) {
 	var ids []string
 

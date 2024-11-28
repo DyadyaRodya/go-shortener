@@ -2,10 +2,11 @@ package app
 
 import (
 	"compress/gzip"
-	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 type compressWriter struct {
@@ -13,10 +14,12 @@ type compressWriter struct {
 	zw *gzip.Writer
 }
 
+// Header for compressWriter
 func (c *compressWriter) Header() http.Header {
 	return c.w.Header()
 }
 
+// Write for compressWriter
 func (c *compressWriter) Write(p []byte) (int, error) {
 	contentType := c.w.Header().Get("Content-Type")
 	if strings.Contains(contentType, echo.MIMEApplicationJSON) || strings.Contains(contentType, echo.MIMETextHTML) {
@@ -25,6 +28,7 @@ func (c *compressWriter) Write(p []byte) (int, error) {
 	return c.w.Write(p)
 }
 
+// WriteHeader for compressWriter
 func (c *compressWriter) WriteHeader(statusCode int) {
 	contentType := c.w.Header().Get("Content-Type")
 	if statusCode < 500 && (strings.Contains(contentType, echo.MIMEApplicationJSON) || strings.Contains(contentType, echo.MIMETextHTML)) {
@@ -33,6 +37,7 @@ func (c *compressWriter) WriteHeader(statusCode int) {
 	c.w.WriteHeader(statusCode)
 }
 
+// Close for compressWriter
 func (c *compressWriter) Close() error {
 	contentType := c.w.Header().Get("Content-Type")
 	if strings.Contains(contentType, echo.MIMEApplicationJSON) || strings.Contains(contentType, echo.MIMETextHTML) {
@@ -58,10 +63,12 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
+// Read for compressReader
 func (c compressReader) Read(p []byte) (n int, err error) {
 	return c.zr.Read(p)
 }
 
+// Close for compressReader
 func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
 		return err
@@ -69,6 +76,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
+// NewGZIPMiddleware Returns middleware for gzip compression of responses and gzip decompression of requests
 func NewGZIPMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

@@ -2,10 +2,12 @@ package config
 
 import (
 	"flag"
-	"github.com/DyadyaRodya/go-shortener/internal/handlers"
 	"os"
+
+	"github.com/DyadyaRodya/go-shortener/internal/handlers"
 )
 
+// Config stores all config data for app.App
 type Config struct {
 	HandlersConfig *handlers.Config
 	ServerAddress  string
@@ -14,6 +16,7 @@ type Config struct {
 	DSN            string
 }
 
+// InitConfigFromCMD reads CMD line and env arguments to Config
 func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, defaultStorageFile string) *Config {
 	serverAddress := flag.String("a", defaultServerAddress, "server address to bind")
 	baseURL := flag.String("b", defaultBaseURL, "base url for short url")

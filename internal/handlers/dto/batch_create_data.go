@@ -2,17 +2,21 @@ package dto
 
 import (
 	"encoding/json"
-	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/labstack/echo/v4"
 	"net/url"
 	"slices"
+
+	"github.com/labstack/echo/v4"
+
+	usecasesdto "github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
 )
 
+// BatchCreateDataRequest structure of batch create requests
 type BatchCreateDataRequest struct {
 	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 
+// BatchCreateDataRequestFromJSONContext Extracts []*BatchCreateDataRequest for JSON body and validate.
 func BatchCreateDataRequestFromJSONContext(c echo.Context) ([]*BatchCreateDataRequest, *ErrorResponse) {
 	data := make([]*BatchCreateDataRequest, 0)
 
@@ -35,6 +39,7 @@ func BatchCreateDataRequestFromJSONContext(c echo.Context) ([]*BatchCreateDataRe
 	return data, nil
 }
 
+// ConvertBatchCreateRequest Converts DTOs []*BatchCreateDataRequest to usecase DTOs []*usecasesdto.BatchCreateRequest
 func ConvertBatchCreateRequest(dto []*BatchCreateDataRequest) []*usecasesdto.BatchCreateRequest {
 	res := make([]*usecasesdto.BatchCreateRequest, 0, len(dto))
 	for _, d := range dto {
@@ -46,6 +51,7 @@ func ConvertBatchCreateRequest(dto []*BatchCreateDataRequest) []*usecasesdto.Bat
 	return res
 }
 
+// BatchCreateDataResponse structure of batch create response
 type BatchCreateDataResponse struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`

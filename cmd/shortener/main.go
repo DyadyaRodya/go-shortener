@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/DyadyaRodya/go-shortener/internal/app"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/DyadyaRodya/go-shortener/internal/app"
 )
 
 const (

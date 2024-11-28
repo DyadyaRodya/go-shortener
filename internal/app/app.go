@@ -4,6 +4,16 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"log"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
+
 	"github.com/DyadyaRodya/go-shortener/internal/auth"
 	"github.com/DyadyaRodya/go-shortener/internal/config"
 	"github.com/DyadyaRodya/go-shortener/internal/domain/services"
@@ -13,16 +23,9 @@ import (
 	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"go.uber.org/zap"
-	"log"
-	"os"
-	"strings"
-	"time"
 )
 
+// App Main structure for shortener service
 type App struct {
 	appConfig  *config.Config
 	e          *echo.Echo
@@ -31,6 +34,13 @@ type App struct {
 	close      func()
 }
 
+// NewApp Creates new *App for shortener service.
+//
+// Reads config, generates keys if needed,
+// initialize structures, setup handlers, middlewares,
+// routes, and starts deleter goroutine.
+//
+// Does not start server for handling requests
 func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultStorageFile string) *App {
 	// init configs
 	appConfig := config.InitConfigFromCMD(DefaultServerAddress, DefaultBaseShortURL, DefaultLogLevel, DefaultStorageFile)
@@ -113,6 +123,9 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	closer := func() {
 		closeStorage()
 		stopDeleter()
+		for range delChan {
+
+		}
 		close(delChan)
 	}
 
@@ -125,6 +138,9 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	}
 }
 
+// Run Starts App server for handling requests.
+//
+// Reads init data from file if provided in config, loads it to storage
 func (a *App) Run() error {
 	a.appLogger.Info("Initializing storage and reading file", zap.String("path", a.appConfig.StorageFile))
 	err := a.readInitData()
@@ -144,6 +160,9 @@ func (a *App) Run() error {
 	return nil
 }
 
+// Shutdown Graceful shutdown of running server.
+//
+// Stops serving requests, saves data from storage to file if provided. Stops deleter goroutine, closes chan.
 func (a *App) Shutdown(signal os.Signal) error {
 	defer a.close()
 
