@@ -49,7 +49,7 @@ func (u *Usecases) ensureUserLinkedToURL(ctx context.Context, url, userUUID stri
 	shortURL, err := tx.GetShortByURL(ctx, url)
 	if err != nil {
 		if errors.Is(err, entity.ErrShortURLDeleted) {
-			err := tx.AddURL(ctx, shortURL, true) // allows uuid rewriting
+			err = tx.AddURL(ctx, shortURL, true) // allows uuid rewriting
 			if err != nil {
 				return nil, err
 			}

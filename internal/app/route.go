@@ -52,22 +52,22 @@ var Wrapper = Wrap
 // WrapGroup adds several routes from package `net/http/pprof` to *echo.Group object.
 func WrapGroup(prefix string, g *echo.Group) {
 	routers := []struct {
+		Handler echo.HandlerFunc
 		Method  string
 		Path    string
-		Handler echo.HandlerFunc
 	}{
-		{"GET", "", IndexHandler()},
-		{"GET", "/", IndexHandler()},
-		{"GET", "/heap", HeapHandler()},
-		{"GET", "/goroutine", GoroutineHandler()},
-		{"GET", "/block", BlockHandler()},
-		{"GET", "/threadcreate", ThreadCreateHandler()},
-		{"GET", "/cmdline", CmdlineHandler()},
-		{"GET", "/profile", ProfileHandler()},
-		{"GET", "/symbol", SymbolHandler()},
-		{"POST", "/symbol", SymbolHandler()},
-		{"GET", "/trace", TraceHandler()},
-		{"GET", "/mutex", MutexHandler()},
+		{IndexHandler(), "GET", ""},
+		{IndexHandler(), "GET", "/"},
+		{HeapHandler(), "GET", "/heap"},
+		{GoroutineHandler(), "GET", "/goroutine"},
+		{BlockHandler(), "GET", "/block"},
+		{ThreadCreateHandler(), "GET", "/threadcreate"},
+		{CmdlineHandler(), "GET", "/cmdline"},
+		{ProfileHandler(), "GET", "/profile"},
+		{SymbolHandler(), "GET", "/symbol"},
+		{SymbolHandler(), "POST", "/symbol"},
+		{TraceHandler(), "GET", "/trace"},
+		{MutexHandler(), "GET", "/mutex"},
 	}
 
 	for _, r := range routers {
