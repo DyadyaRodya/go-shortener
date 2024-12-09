@@ -57,7 +57,8 @@ func (u *Usecases) BatchCreateShortURLs(
 	newIDs := make([]string, 0, len(createRequests)-len(existingShortURLs))
 	for _, createRequest := range createRequests {
 		if _, ok := existingShortURLs[createRequest.OriginalURL]; !ok {
-			id, err := u.idGenerator.Generate()
+			var id string
+			id, err = u.idGenerator.Generate()
 			if err != nil {
 				return nil, err
 			}

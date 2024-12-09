@@ -28,6 +28,7 @@ mock:
 lint: # run statictest
 	$(LOCAL_BIN)/goimports -local "github.com/DyadyaRodya/go-shortener" -w cmd internal pkg
 	go vet -vettool=/usr/bin/statictest ./...
+	go build -o cmd/staticlint/main cmd/staticlint/main.go && go vet -vettool=cmd/staticlint/main ./...
 
 .PHONY: tests
 tests: # run unit tests

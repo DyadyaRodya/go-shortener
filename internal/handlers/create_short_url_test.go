@@ -14,13 +14,13 @@ import (
 
 func (h *handlersSuite) TestCreateShortURL() {
 	type usecaseResult struct {
-		shortURL *entity.ShortURL
 		err      error
+		shortURL *entity.ShortURL
 	}
 	type want struct {
-		code        int
 		response    string
 		contentType string
+		code        int
 	}
 	tests := []struct {
 		name         string
@@ -120,13 +120,13 @@ func (h *handlersSuite) TestCreateShortURL() {
 
 func (h *handlersSuite) TestCreateShortURLJSON() {
 	type usecaseResult struct {
-		shortURL *entity.ShortURL
 		err      error
+		shortURL *entity.ShortURL
 	}
 	type want struct {
-		code        int
 		response    string
 		contentType string
+		code        int
 	}
 	tests := []struct {
 		name         string

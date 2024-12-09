@@ -10,6 +10,6 @@ type BatchCreateRequest struct {
 
 // BatchCreateResponse DTO for returning batch create short URL results from usecases.Usecases
 type BatchCreateResponse struct {
-	CorrelationID string
 	ShortURL      *entity.ShortURL
+	CorrelationID string
 }

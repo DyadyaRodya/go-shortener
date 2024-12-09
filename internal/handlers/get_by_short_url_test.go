@@ -15,13 +15,13 @@ func (h *handlersSuite) TestGetShortURL() {
 		err      error
 	}
 	type want struct {
-		code    int
 		headers map[string]string
+		code    int
 	}
 	tests := []struct {
 		name         string
-		request      *http.Request
 		usecaseParam string
+		request      *http.Request
 		usecaseRes   *usecaseResult
 		want         want
 	}{

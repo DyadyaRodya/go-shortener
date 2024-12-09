@@ -13,21 +13,21 @@ import (
 
 func (h *handlersSuite) TestGetUserShortURLs() {
 	type usecaseResult struct {
-		shortURLs []*entity.ShortURL
 		err       error
+		shortURLs []*entity.ShortURL
 	}
 	type want struct {
-		code        int
 		response    string
 		contentType string
+		code        int
 	}
 	tests := []struct {
 		name       string
-		request    *http.Request
-		authorized bool
 		userUUID   string
+		request    *http.Request
 		usecaseRes *usecaseResult
 		want       want
+		authorized bool
 	}{
 		{
 			name:       "Success",
