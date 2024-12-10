@@ -86,3 +86,8 @@ test-all: # run test for all iterations
 .PHONY: swagger
 swagger: # generate swagger
 	$(LOCAL_BIN)/swag init --pd --dir internal/handlers --generalInfo handlers.go
+
+
+.PHONY: build
+build: # build example
+	go build -ldflags="-X main.buildVersion=v1.0.1 -X 'main.buildDate=$$(date +'%Y/%m/%d %H:%M:%S')' -X 'main.buildCommit=$$(git rev-parse --short HEAD)'" -o cmd/shortener/main cmd/shortener/main.go

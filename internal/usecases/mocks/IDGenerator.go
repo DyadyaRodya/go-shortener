@@ -17,7 +17,7 @@ func (_m *IDGenerator) EXPECT() *IDGenerator_Expecter {
 	return &IDGenerator_Expecter{mock: &_m.Mock}
 }
 
-// Generate provides a mock function with given fields:
+// Generate provides a mock function with no fields
 func (_m *IDGenerator) Generate() (string, error) {
 	ret := _m.Called()
 
