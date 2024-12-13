@@ -15,13 +15,13 @@ import (
 
 func (h *handlersSuite) TestBatchCreateShortURLJSON() {
 	type usecaseResult struct {
-		responses []*usecasesdto.BatchCreateResponse
 		err       error
+		responses []*usecasesdto.BatchCreateResponse
 	}
 	type want struct {
-		code        int
 		response    string
 		contentType string
+		code        int
 	}
 	tests := []struct {
 		name         string

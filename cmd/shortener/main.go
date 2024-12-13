@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,7 +16,17 @@ const (
 	defaultStorageFile   = ""
 )
 
+var buildVersion = "N/A" //nolint: gochecknoglobals // This var could be global
+var buildDate = "N/A"    //nolint: gochecknoglobals // This var could be global
+var buildCommit = "N/A"  //nolint: gochecknoglobals // This var could be global
+
 func main() {
+	fmt.Printf(
+		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
+		buildVersion,
+		buildDate,
+		buildCommit,
+	)
 	server := app.NewApp(defaultBaseShortURL, defaultServerAddress, defaultLogLevel, defaultStorageFile)
 
 	c := make(chan os.Signal, 1)

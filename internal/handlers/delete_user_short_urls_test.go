@@ -14,16 +14,13 @@ import (
 
 func (h *handlersSuite) TestDeleteUserShortURLs() {
 
-	type want struct {
-		code int
-	}
 	tests := []struct {
 		name        string
 		request     *http.Request
 		contentType string
-		authorized  bool
 		userUUID    string
-		want        want
+		authorized  bool
+		want        int
 	}{
 		{
 			name: "Success",
@@ -32,27 +29,21 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 			contentType: "application/json; charset=utf-8",
 			authorized:  true,
 			userUUID:    gofakeit.UUID(),
-			want: want{
-				code: http.StatusAccepted,
-			},
+			want:        http.StatusAccepted,
 		},
 		{
 			name: "Bad_id",
 			request: httptest.NewRequest(http.MethodDelete, "/api/user/urls",
 				strings.NewReader(`["blablablabla"]`)),
 			contentType: "application/json; charset=utf-8",
-			want: want{
-				code: http.StatusBadRequest,
-			},
+			want:        http.StatusBadRequest,
 		},
 		{
 			name: "Not_json",
 			request: httptest.NewRequest(http.MethodDelete, "/api/user/urls",
 				strings.NewReader("10abcdef")),
 			contentType: "text/plain",
-			want: want{
-				code: http.StatusBadRequest,
-			},
+			want:        http.StatusBadRequest,
 		},
 	}
 
@@ -70,9 +61,9 @@ func (h *handlersSuite) TestDeleteUserShortURLs() {
 
 			if h.NoError(h.handlers.DeleteUserShortURLs(c)) {
 				// test code
-				h.Equal(test.want.code, w.Code)
+				h.Equal(test.want, w.Code)
 
-				if test.want.code < 400 {
+				if test.want < 400 {
 					// test DelChan has request
 					select {
 					case data := <-h.handlers.DelChan:

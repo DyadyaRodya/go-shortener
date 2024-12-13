@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -88,7 +90,8 @@ func (s *StorePGX) LoadURLs(ctx context.Context, src map[string]string) error {
 	sqlQuery := `INSERT INTO short_urls (uuid, url) VALUES (@uuid, @url) ON CONFLICT DO NOTHING`
 
 	for uuid, url := range src {
-		ct, err := tx.Exec(ctx, sqlQuery, pgx.NamedArgs{"uuid": uuid, "url": url})
+		var ct pgconn.CommandTag
+		ct, err = tx.Exec(ctx, sqlQuery, pgx.NamedArgs{"uuid": uuid, "url": url})
 
 		if err != nil {
 			s.logger.Error("Failed to insert into short_urls",
@@ -123,7 +126,8 @@ func (s *StorePGX) LoadUsersURLs(ctx context.Context, src map[string][]string) e
 							VALUES (@user_uuid, @short_url_uuid) ON CONFLICT DO NOTHING`
 
 	for userUUID, shortUUIDs := range src {
-		ct, err := tx.Exec(ctx, sqlQueryUsers, pgx.NamedArgs{"uuid": userUUID})
+		var ct pgconn.CommandTag
+		ct, err = tx.Exec(ctx, sqlQueryUsers, pgx.NamedArgs{"uuid": userUUID})
 
 		if err != nil {
 			s.logger.Error("Failed to insert into users", zap.String("user_uuid", userUUID), zap.Error(err))
@@ -137,7 +141,7 @@ func (s *StorePGX) LoadUsersURLs(ctx context.Context, src map[string][]string) e
 		}
 
 		for _, shortUUID := range shortUUIDs {
-			ct, err := tx.Exec(ctx, sqlQueryUsersURLs, pgx.NamedArgs{"user_uuid": userUUID, "short_url_uuid": shortUUID})
+			ct, err = tx.Exec(ctx, sqlQueryUsersURLs, pgx.NamedArgs{"user_uuid": userUUID, "short_url_uuid": shortUUID})
 
 			if err != nil {
 				s.logger.Error("Failed to insert into short_urls",
@@ -179,13 +183,13 @@ func (s *StorePGX) URLs(ctx context.Context) (*map[string]string, error) {
 
 	for rows.Next() {
 		var uuid, url string
-		if err := rows.Scan(&uuid, &url); err != nil {
+		if err = rows.Scan(&uuid, &url); err != nil {
 			s.logger.Error("Failed to scan StorePGX.URLs", zap.Error(err))
 			return nil, err
 		}
 		dst[uuid] = url
 	}
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		s.logger.Error("Failed to query database StorePGX.URLs", zap.Error(err))
 		return nil, err
 	}
@@ -206,13 +210,13 @@ func (s *StorePGX) UsersURLs(ctx context.Context) (*map[string][]string, error) 
 
 	for rows.Next() {
 		var userUUID, ShortUUID string
-		if err := rows.Scan(&userUUID, &ShortUUID); err != nil {
+		if err = rows.Scan(&userUUID, &ShortUUID); err != nil {
 			s.logger.Error("Failed to scan StorePGX.UsersURLs", zap.Error(err))
 			return nil, err
 		}
 		dst[userUUID] = append(dst[userUUID], ShortUUID)
 	}
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		s.logger.Error("Failed to query database StorePGX.UsersURLs", zap.Error(err))
 		return nil, err
 	}
@@ -236,20 +240,20 @@ func (s *StorePGX) AddURL(ctx context.Context, ShortURL *entity.ShortURL, OwnerU
 	}
 	defer tx.Rollback(ctx)
 
-	if err := tx.AddURL(ctx, ShortURL, false); err != nil {
+	if err = tx.AddURL(ctx, ShortURL, false); err != nil {
 		err = fmt.Errorf("StorePGX.AddURL: %w", err)
 		s.logger.Info("Failed to add URL in StorePGX.AddURL", zap.Error(err))
 		return err
 	}
 
 	if OwnerUUID != "" {
-		if err := tx.AddUserIfNotExists(ctx, OwnerUUID); err != nil {
+		if err = tx.AddUserIfNotExists(ctx, OwnerUUID); err != nil {
 			err = fmt.Errorf("StorePGX.AddURL: %w", err)
 			s.logger.Error("Failed to add user in StorePGX.AddURL", zap.Error(err))
 			return err
 		}
 
-		if err := tx.AddUserURL(ctx, ShortURL.ID, OwnerUUID); err != nil {
+		if err = tx.AddUserURL(ctx, ShortURL.ID, OwnerUUID); err != nil {
 			err = fmt.Errorf("StorePGX.AddUserURL: %w", err)
 			s.logger.Error("Failed to add user in StorePGX.AddUserURL", zap.Error(err))
 			return err
@@ -338,7 +342,8 @@ func (s *StorePGX) DeleteUserURLs(ctx context.Context, requests ...*dto.DeleteUs
 		if request.UserUUID == "" {
 			continue
 		}
-		ct, err := tx.Exec(ctx, deleteQuery, request.UserUUID, request.ShortURLUUIDs)
+		var ct pgconn.CommandTag
+		ct, err = tx.Exec(ctx, deleteQuery, request.UserUUID, request.ShortURLUUIDs)
 
 		if err != nil {
 			s.logger.Info("Failed to delete from users_short_urls",
