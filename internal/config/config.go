@@ -14,6 +14,7 @@ type Config struct {
 	LogLevel       string
 	StorageFile    string
 	DSN            string
+	EnableHTTPS    bool
 }
 
 // InitConfigFromCMD reads CMD line and env arguments to Config
@@ -23,6 +24,7 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 	logLevel := flag.String("l", defaultLogLevel, "log level")
 	storageFile := flag.String("f", defaultStorageFile, "file storage path")
 	dsn := flag.String("d", "", "database connection string")
+	enableHTTPS := flag.Bool("s", false, "enable https")
 	flag.Parse()
 
 	if envServerAddress := os.Getenv("SERVER_ADDRESS"); envServerAddress != "" {
@@ -40,6 +42,9 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 	if envDSN := os.Getenv("DATABASE_DSN"); envDSN != "" {
 		dsn = &envDSN
 	}
+	if envEnableHTTPS := os.Getenv("ENABLE_HTTPS"); envEnableHTTPS != "" {
+		*enableHTTPS = true
+	}
 
 	return &Config{
 		HandlersConfig: &handlers.Config{
@@ -49,5 +54,6 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 		LogLevel:      *logLevel,
 		StorageFile:   *storageFile,
 		DSN:           *dsn,
+		EnableHTTPS:   *enableHTTPS,
 	}
 }

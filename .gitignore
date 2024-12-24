@@ -33,3 +33,9 @@ coverage.out
 
 # logs
 *.log
+
+# cert an key
+*.pem
+
+# SAST plugin
+.ai
