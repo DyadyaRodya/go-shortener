@@ -30,7 +30,7 @@ func main() {
 	server := app.NewApp(defaultBaseShortURL, defaultServerAddress, defaultLogLevel, defaultStorageFile)
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
 		s := <-c
 		err := server.Shutdown(s)
