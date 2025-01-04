@@ -151,8 +151,16 @@ func (a *App) Run() error {
 		)
 		return err
 	}
-	a.appLogger.Info("Starting server at", zap.String("address", a.appConfig.ServerAddress))
-	err = a.e.Start(a.appConfig.ServerAddress)
+	if a.appConfig.EnableHTTPS {
+		a.appLogger.Info("Ensure certificate and private key exist")
+		ensureCertAndKeyExist(a.appLogger)
+		a.appLogger.Info("Starting HTTPS server", zap.String("address", a.appConfig.ServerAddress))
+		err = a.e.StartTLS(a.appConfig.ServerAddress, "goshortener.cert.pem", "goshortener.key.pem")
+	} else {
+		a.appLogger.Info("Starting HTTP server", zap.String("address", a.appConfig.ServerAddress))
+		err = a.e.Start(a.appConfig.ServerAddress)
+
+	}
 	if err != nil && !strings.Contains(err.Error(), "http: Server closed") {
 		a.appLogger.Error("Starting error", zap.Error(err))
 		return err
