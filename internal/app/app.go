@@ -117,7 +117,7 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	h := handlers.NewHandlers(u, appConfig.HandlersConfig, delChan)
 
 	// setup handlers for routes
-	setupRoutes(e, h)
+	setupRoutes(e, h, auth.NewTrustedSubnetMiddleware(appConfig.TrustedSubnet))
 
 	// need to close all connections, channels and stop goroutines
 	closer := func() {
