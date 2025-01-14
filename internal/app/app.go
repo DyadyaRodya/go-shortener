@@ -4,15 +4,25 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"log"
+	"net"
 	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
+	"github.com/DyadyaRodya/go-shortener/internal/grpchandlers"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
+
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 
 	"github.com/DyadyaRodya/go-shortener/internal/auth"
 	"github.com/DyadyaRodya/go-shortener/internal/config"
@@ -23,12 +33,15 @@ import (
 	pgxrepo "github.com/DyadyaRodya/go-shortener/internal/repositories/pgx"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases"
 	"github.com/DyadyaRodya/go-shortener/internal/usecases/dto"
+	pb "github.com/DyadyaRodya/go-shortener/proto/v1"
 )
 
 // App Main structure for shortener service
 type App struct {
 	appConfig  *config.Config
 	e          *echo.Echo
+	gh         *grpchandlers.GrpcHandlers
+	grpcServer *grpc.Server
 	appLogger  *zap.Logger
 	appStorage *usecases.URLStorage
 	close      func()
@@ -41,18 +54,30 @@ type App struct {
 // routes, and starts deleter goroutine.
 //
 // Does not start server for handling requests
-func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultStorageFile string) *App {
+func NewApp(
+	DefaultBaseShortURL,
+	DefaultServerAddress,
+	DefaultGrpcAddress,
+	DefaultLogLevel,
+	DefaultStorageFile string,
+) *App {
 	// init configs
-	appConfig := config.InitConfigFromCMD(DefaultServerAddress, DefaultBaseShortURL, DefaultLogLevel, DefaultStorageFile)
+	appConfig := config.InitConfigFromCMD(
+		DefaultServerAddress,
+		DefaultGrpcAddress,
+		DefaultBaseShortURL,
+		DefaultLogLevel,
+		DefaultStorageFile,
+	)
 
 	var appLogger *zap.Logger
-	var loggerMW echo.MiddlewareFunc
 	var err error
 	// init logger middleware
-	if appLogger, loggerMW, err = logger.Initialize(appConfig.LogLevel); err != nil {
+	if appLogger, err = logger.BuildLogger(appConfig.LogLevel); err != nil {
 		log.Printf("Config %+v\n", *appConfig.HandlersConfig)
 		log.Fatalf("Cannot initialize logger %+v\n", err)
 	}
+	loggerMW := logger.InitializeEcho(appLogger)
 
 	appLogger.Info("Config", zap.Any("config", appConfig))
 
@@ -71,6 +96,7 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 		n, err := base64.URLEncoding.Decode(secretKey, []byte(secretKeyString))
 		appLogger.Debug("after decoding secret key", zap.Int("n", n), zap.Error(err))
 	}
+	appConfig.GrpcHandlersConfig.SecretKey = secretKey
 
 	// init Echo
 	e := echo.New()
@@ -85,6 +111,7 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 
 	// init services
 	idGenerator := services.NewIDGenerator()
+	jwtService := auth.NewJWTService(secretKey, uuid4Generator)
 
 	// init storage
 	var closeStorage func()
@@ -115,6 +142,7 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 
 	// init handlers
 	h := handlers.NewHandlers(u, appConfig.HandlersConfig, delChan)
+	gh := grpchandlers.NewGrpcHandlers(u, jwtService, appConfig.GrpcHandlersConfig, delChan)
 
 	// setup handlers for routes
 	setupRoutes(e, h, auth.NewTrustedSubnetMiddleware(appConfig.TrustedSubnet))
@@ -132,6 +160,7 @@ func NewApp(DefaultBaseShortURL, DefaultServerAddress, DefaultLogLevel, DefaultS
 	return &App{
 		appConfig:  appConfig,
 		e:          e,
+		gh:         gh,
 		appLogger:  appLogger,
 		appStorage: &store,
 		close:      closer,
@@ -151,18 +180,56 @@ func (a *App) Run() error {
 		)
 		return err
 	}
-	if a.appConfig.EnableHTTPS {
-		a.appLogger.Info("Ensure certificate and private key exist")
-		ensureCertAndKeyExist(a.appLogger)
-		a.appLogger.Info("Starting HTTPS server", zap.String("address", a.appConfig.ServerAddress))
-		err = a.e.StartTLS(a.appConfig.ServerAddress, "goshortener.cert.pem", "goshortener.key.pem")
-	} else {
-		a.appLogger.Info("Starting HTTP server", zap.String("address", a.appConfig.ServerAddress))
-		err = a.e.Start(a.appConfig.ServerAddress)
 
+	g, _ := errgroup.WithContext(context.Background())
+
+	if a.appConfig.EnableHTTPS {
+		ensureCertAndKeyExist(a.appLogger)
 	}
-	if err != nil && !strings.Contains(err.Error(), "http: Server closed") {
-		a.appLogger.Error("Starting error", zap.Error(err))
+
+	g.Go(func() error {
+		if a.appConfig.EnableHTTPS {
+			a.appLogger.Info("Ensure certificate and private key exist")
+			a.appLogger.Info("Starting HTTPS server", zap.String("address", a.appConfig.ServerAddress))
+			err = a.e.StartTLS(a.appConfig.ServerAddress, "goshortener.cert.pem", "goshortener.key.pem")
+		} else {
+			a.appLogger.Info("Starting HTTP server", zap.String("address", a.appConfig.ServerAddress))
+			err = a.e.Start(a.appConfig.ServerAddress)
+
+		}
+		if err != nil && !strings.Contains(err.Error(), "http: Server closed") {
+			a.appLogger.Error("Starting error", zap.Error(err))
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		listen, err := net.Listen("tcp", a.appConfig.GrpcAddress)
+		if err != nil {
+			a.appLogger.Error("Starting gRPC error", zap.Error(err))
+			return err
+		}
+
+		var s *grpc.Server
+		if a.appConfig.EnableHTTPS {
+			creds, _ := credentials.NewServerTLSFromFile("goshortener.cert.pem", "goshortener.key.pem")
+			s = grpc.NewServer(grpc.Creds(creds), grpc.ChainUnaryInterceptor(logging.UnaryServerInterceptor(logger.InterceptorLogger(a.appLogger))))
+		} else {
+			s = grpc.NewServer(grpc.ChainUnaryInterceptor(logging.UnaryServerInterceptor(logger.InterceptorLogger(a.appLogger))))
+		}
+
+		pb.RegisterGoShortenerServiceServer(s, a.gh)
+		a.grpcServer = s
+
+		a.appLogger.Info("gRPC started at", zap.String("grpc_address", a.appConfig.GrpcAddress))
+		if err := s.Serve(listen); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			a.appLogger.Error("Serving gRPC error", zap.Error(err))
+			return err
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
 		return err
 	}
 	return nil
@@ -193,6 +260,8 @@ func (a *App) Shutdown(signal os.Signal) error {
 
 		}
 	}
+
+	a.grpcServer.GracefulStop()
 
 	ctx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelFunc()
