@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
+	"net"
 	"os"
 
 	"github.com/DyadyaRodya/go-shortener/internal/handlers"
@@ -12,6 +13,7 @@ import (
 // Config stores all config data for app.App
 type Config struct {
 	HandlersConfig *handlers.Config
+	TrustedSubnet  *net.IPNet
 	ServerAddress  string
 	LogLevel       string
 	StorageFile    string
@@ -24,6 +26,7 @@ type config struct {
 	BaseURL       string `json:"base_url"`
 	StorageFile   string `json:"file_storage_path"`
 	DSN           string `json:"database_dsn"`
+	TrustedSubnet string `json:"trusted_subnet"`
 	EnableHTTPS   bool   `json:"enable_https"`
 }
 
@@ -38,6 +41,7 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 	storageFile := flag.String("f", "", "file storage path")
 	dsn := flag.String("d", "", "database connection string")
 	enableHTTPS := flag.Bool("s", false, "enable https")
+	trustedSubnet := flag.String("t", "", "trusted subnet")
 	flag.Parse()
 
 	if envConfigFile := os.Getenv("CONFIG"); envConfigFile != "" {
@@ -61,6 +65,9 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 	}
 	if envEnableHTTPS := os.Getenv("ENABLE_HTTPS"); envEnableHTTPS != "" {
 		*enableHTTPS = true
+	}
+	if envTrustedSubnet := os.Getenv("TRUSTED_SUBNET"); envTrustedSubnet != "" {
+		trustedSubnet = &envTrustedSubnet
 	}
 
 	conf := &config{}
@@ -104,6 +111,18 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 	if !*enableHTTPS {
 		*enableHTTPS = conf.EnableHTTPS
 	}
+	if *trustedSubnet == "" {
+		*trustedSubnet = conf.TrustedSubnet
+	}
+
+	var confNet *net.IPNet
+	if *trustedSubnet != "" {
+		_, ipNet, err := net.ParseCIDR(*trustedSubnet)
+		if err != nil {
+			log.Fatalf("failed to parse trusted subnet %s: %s", *trustedSubnet, err.Error())
+		}
+		confNet = ipNet
+	}
 
 	return &Config{
 		HandlersConfig: &handlers.Config{
@@ -114,5 +133,6 @@ func InitConfigFromCMD(defaultServerAddress, defaultBaseURL, defaultLogLevel, de
 		StorageFile:   *storageFile,
 		DSN:           *dsn,
 		EnableHTTPS:   *enableHTTPS,
+		TrustedSubnet: confNet,
 	}
 }

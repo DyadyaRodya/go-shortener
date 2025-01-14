@@ -16,22 +16,24 @@ import (
 )
 
 const (
-	rootURL            = "/"
-	apiShortenURL      = "/api/shorten"
-	apiShortenURLBatch = "/api/shorten/batch"
-	apiGetUserURLs     = "/api/user/urls"
-	apiDeleteUserURLs  = "/api/user/urls"
-	idURL              = "/:" + dto.IDParamName
-	pingURL            = "/ping"
+	rootURL             = "/"
+	apiShortenURL       = "/api/shorten"
+	apiShortenURLBatch  = "/api/shorten/batch"
+	apiGetUserURLs      = "/api/user/urls"
+	apiDeleteUserURLs   = "/api/user/urls"
+	apiGetInternalStats = "/api/internal/stats"
+	idURL               = "/:" + dto.IDParamName
+	pingURL             = "/ping"
 )
 
-func setupRoutes(e *echo.Echo, handlers *handlers.Handlers) {
+func setupRoutes(e *echo.Echo, handlers *handlers.Handlers, internalSubnetMW echo.MiddlewareFunc) {
 	e.GET(idURL, handlers.GetByShortURL)
 	e.POST(rootURL, handlers.CreateShortURL)
 	e.POST(apiShortenURL, handlers.CreateShortURLJSON)
 	e.POST(apiShortenURLBatch, handlers.BatchCreateShortURLJSON)
 	e.GET(apiGetUserURLs, handlers.GetUserShortURLs)
 	e.DELETE(apiDeleteUserURLs, handlers.DeleteUserShortURLs)
+	e.GET(apiGetInternalStats, internalSubnetMW(handlers.GetStats))
 	e.GET(pingURL, handlers.PingHandler)
 
 	e.GET("/docs/swagger/*", echoSwagger.WrapHandler)

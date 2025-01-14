@@ -66,6 +66,39 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/internal/stats": {
+            "get": {
+                "description": "Get total numbers  of users and shortened URLs",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info Internal"
+                ],
+                "summary": "Get total numbers  of users and shortened URLs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "",
+                        "description": "real ip address from webserver",
+                        "name": "X-Real-IP",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StatsData"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                }
+            }
+        },
         "/api/shorten": {
             "post": {
                 "description": "Create short URL for full URL",
@@ -359,6 +392,17 @@ const docTemplate = `{
                 },
                 "short_url": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.StatsData": {
+            "type": "object",
+            "properties": {
+                "urls": {
+                    "type": "integer"
+                },
+                "users": {
+                    "type": "integer"
                 }
             }
         }
