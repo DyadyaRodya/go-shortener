@@ -52,6 +52,9 @@ type (
 		// Removes URLs that are not linked to any other users.
 		DeleteUserURLs(ctx context.Context, requests ...*dto.DeleteUserShortURLsRequest) error
 
+		// GetStats returns summary *dto.StatsResponse with total numbers of shortened URLs and users stored
+		GetStats(ctx context.Context) (*dto.StatsResponse, error)
+
 		// Begin starts new Transaction session for Storage
 		Begin(ctx context.Context) (Transaction, error)
 	}

@@ -12,6 +12,7 @@ import (
 const (
 	defaultBaseShortURL  = "http://localhost:8080/"
 	defaultServerAddress = `:8080`
+	defaultGrpcAddress   = `:50051`
 	defaultLogLevel      = "info"
 	defaultStorageFile   = ""
 )
@@ -27,7 +28,13 @@ func main() {
 		buildDate,
 		buildCommit,
 	)
-	server := app.NewApp(defaultBaseShortURL, defaultServerAddress, defaultLogLevel, defaultStorageFile)
+	server := app.NewApp(
+		defaultBaseShortURL,
+		defaultServerAddress,
+		defaultGrpcAddress,
+		defaultLogLevel,
+		defaultStorageFile,
+	)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)

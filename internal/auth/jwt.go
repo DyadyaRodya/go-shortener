@@ -123,3 +123,44 @@ func setTokenCookie(c echo.Context, userUUID string, secretKey []byte, ttl time.
 	c.SetCookie(token)
 	return nil
 }
+
+// JWTService service to extract user uuid from jwt token and generate new token and user uuid
+type JWTService struct {
+	uuidGenerator UUIDGenerator
+	secretKey     []byte
+}
+
+// NewJWTService Constructor for JWTService
+func NewJWTService(secretKey []byte, uuidGenerator UUIDGenerator) *JWTService {
+	return &JWTService{
+		secretKey:     secretKey,
+		uuidGenerator: uuidGenerator,
+	}
+}
+
+// ProcessToken verifies token claims, generates user uuid for new unauthenticated users
+func (s *JWTService) ProcessToken(token string) (userUUID string, authenticated bool, err error) {
+	if token == "" {
+		userUUID, err = s.uuidGenerator.Generate()
+		if err != nil {
+			return "", false, fmt.Errorf("error in JWTService.uuidGenerator.Generate %w", err)
+		}
+		return userUUID, false, nil
+	}
+
+	userUUID = getUserUUID(token, s.secretKey)
+	if userUUID != "" {
+		return userUUID, true, nil
+	}
+
+	userUUID, err = s.uuidGenerator.Generate()
+	if err != nil {
+		return "", false, fmt.Errorf("error in JWTService.uuidGenerator.Generate %w", err)
+	}
+	return userUUID, false, nil
+}
+
+// GenerateToken generates new jwt token with user uuid
+func (s *JWTService) GenerateToken(userUUID string) (string, error) {
+	return generateJWTTokenString(userUUID, s.secretKey, ttl)
+}

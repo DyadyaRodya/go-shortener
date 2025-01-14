@@ -8,6 +8,8 @@ install_bin: # install binary dependencies
 	GOBIN=$(LOCAL_BIN) go install golang.org/x/tools/cmd/goimports@latest
 	GOBIN=$(LOCAL_BIN) go install golang.org/x/tools/cmd/godoc@latest
 	GOBIN=$(LOCAL_BIN) go install github.com/swaggo/swag/cmd/swag@latest
+	GOBIN=$(LOCAL_BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	GOBIN=$(LOCAL_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 
 .PHONY: install
 install: install_bin
@@ -24,11 +26,15 @@ mock:
 	make mockery name=URLStorage dir=./internal/usecases
 	make mockery name=IDGenerator dir=./internal/usecases
 
+.PHONY: generate
+generate: # generate gRPC files
+	protoc  --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative proto/v1/go_shortener.proto
+
 .PHONY: lint
 lint: # run statictest
 	$(LOCAL_BIN)/goimports -local "github.com/DyadyaRodya/go-shortener" -w cmd internal pkg
 	go vet -vettool=/usr/bin/statictest ./...
-	go build -o cmd/staticlint/main cmd/staticlint/main.go && go vet -vettool=cmd/staticlint/main ./...
+	go build -o cmd/staticlint/main cmd/staticlint/main.go && go vet -vettool=cmd/staticlint/main ./internal/... ./pkg/... ./cmd/...
 
 .PHONY: tests
 tests: # run unit tests

@@ -377,3 +377,33 @@ func (s *StorePGX) DeleteUserURLs(ctx context.Context, requests ...*dto.DeleteUs
 	}
 	return nil
 }
+
+// GetStats returns summary *dto.StatsResponse with total numbers of shortened URLs and users stored
+func (s *StorePGX) GetStats(ctx context.Context) (*dto.StatsResponse, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		s.logger.Error("Failed to begin transaction StorePGX.GetStats", zap.Error(err))
+		return nil, fmt.Errorf("StorePGX.GetStats: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	res := &dto.StatsResponse{
+		URLs:  0,
+		Users: 0,
+	}
+
+	err = tx.QueryRow(ctx, `
+		WITH sh_u_ct AS (SELECT COALESCE(COUNT(short_urls.uuid), 0) AS short_urls_count FROM short_urls),
+     		 u_ct AS (SELECT COALESCE(COUNT(users.uuid), 0) AS users_count from users)
+		SELECT
+    		short_urls_count,
+    		users_count
+		FROM sh_u_ct, u_ct
+	`).Scan(&res.URLs, &res.Users)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		s.logger.Error("Failed to get Stats", zap.Error(err))
+		return nil, err
+	}
+
+	return res, nil
+}
