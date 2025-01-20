@@ -30,15 +30,15 @@ func main() {
 
 	res1, err := c.BatchCreateShortURL(ctx, &pb.BatchCreateShortURLRequest{
 		Urls: []*pb.BatchCreateShortURLRequestItem{
-			&pb.BatchCreateShortURLRequestItem{
+			{
 				CorrelationId: "1",
 				OriginalUrl:   "https://google.com",
 			},
-			&pb.BatchCreateShortURLRequestItem{
+			{
 				CorrelationId: "2",
 				OriginalUrl:   "https://ya.ru",
 			},
-			&pb.BatchCreateShortURLRequestItem{
+			{
 				CorrelationId: "3",
 				OriginalUrl:   "https://mail.ru",
 			},

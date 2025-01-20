@@ -30,30 +30,30 @@ func (u *usecasesSuite) TestUsecases_BatchCreateShortURLs_Success() {
 	userUUID := gofakeit.UUID()
 
 	requests := []*dto.BatchCreateRequest{
-		&dto.BatchCreateRequest{
+		{
 			CorrelationID: "1",
 			OriginalURL:   existedShortURL.URL,
 		},
-		&dto.BatchCreateRequest{
+		{
 			CorrelationID: "2",
 			OriginalURL:   fullURL,
 		},
-		&dto.BatchCreateRequest{
+		{
 			CorrelationID: "3",
 			OriginalURL:   existedUserShortURL.URL,
 		},
 	}
 
 	expected := []*dto.BatchCreateResponse{
-		&dto.BatchCreateResponse{
+		{
 			CorrelationID: "1",
 			ShortURL:      existedShortURL,
 		},
-		&dto.BatchCreateResponse{
+		{
 			CorrelationID: "2",
 			ShortURL:      shortURL,
 		},
-		&dto.BatchCreateResponse{
+		{
 			CorrelationID: "3",
 			ShortURL:      existedUserShortURL,
 		},

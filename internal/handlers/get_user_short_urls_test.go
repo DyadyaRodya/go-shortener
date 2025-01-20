@@ -36,7 +36,7 @@ func (h *handlersSuite) TestGetUserShortURLs() {
 			userUUID:   gofakeit.UUID(),
 			usecaseRes: &usecaseResult{
 				shortURLs: []*entity.ShortURL{
-					&entity.ShortURL{
+					{
 						ID:  "10abcdef",
 						URL: "http://full.url.com/test",
 					},

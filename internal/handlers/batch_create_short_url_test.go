@@ -42,14 +42,14 @@ func (h *handlersSuite) TestBatchCreateShortURLJSON() {
 					]`)),
 			contentType: "application/json; charset=utf-8",
 			usecaseParam: []*usecasesdto.BatchCreateRequest{
-				&usecasesdto.BatchCreateRequest{
+				{
 					CorrelationID: "1",
 					OriginalURL:   "http://full.url.com/test",
 				},
 			},
 			usecaseRes: &usecaseResult{
 				responses: []*usecasesdto.BatchCreateResponse{
-					&usecasesdto.BatchCreateResponse{
+					{
 						CorrelationID: "1",
 						ShortURL: &entity.ShortURL{
 							ID:  "10abcdef",
