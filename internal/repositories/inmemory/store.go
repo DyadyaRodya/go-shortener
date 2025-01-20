@@ -153,3 +153,11 @@ func (s *StoreInMemory) DeleteUserURLs(_ context.Context, requests ...*dto.Delet
 	}
 	return nil
 }
+
+// GetStats returns summary *dto.StatsResponse with total numbers of shortened URLs and users stored
+func (s *StoreInMemory) GetStats(_ context.Context) (*dto.StatsResponse, error) {
+	return &dto.StatsResponse{
+		URLs:  len(s.urls),
+		Users: len(s.usersShortUrls),
+	}, nil
+}

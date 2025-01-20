@@ -19,6 +19,7 @@ type (
 			UserUUID string,
 		) ([]*usecasesdto.BatchCreateResponse, error)
 		GetUserShortURLs(ctx context.Context, userUUID string) ([]*entity.ShortURL, error)
+		GetStats(ctx context.Context) (*usecasesdto.StatsResponse, error)
 	}
 
 	Config struct {

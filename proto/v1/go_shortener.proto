@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package go_shortener.v1;
+
+option go_package = "github.com/DyadyaRodya/go-shortener/proto/v1";
+
+
+message CreateShortURLRequest {
+  string url = 1; // original url to shorten
+}
+
+message CreateShortURLResponse {
+  string new_jwt_token = 1; // new token after first call of user or after refreshing
+  string result = 2; // resulting short url
+  enum Status {
+    CREATED = 0;
+    ALREADY_EXISTS = 1;
+  }
+  Status status = 3;
+}
+
+message BatchCreateShortURLRequestItem {
+  string correlation_id = 1;
+  string original_url = 2; // original url to shorten
+}
+
+message BatchCreateShortURLResponseItem {
+  string correlation_id = 1;
+  string short_url = 2; // resulting short url
+}
+
+message BatchCreateShortURLRequest {
+  repeated BatchCreateShortURLRequestItem urls = 1;
+}
+
+message BatchCreateShortURLResponse {
+  string new_jwt_token = 1; // new token after first call of user or after refreshing
+  repeated BatchCreateShortURLResponseItem results = 2;
+}
+
+message DeleteShortURLsRequest {
+  repeated string ids = 1;
+}
+
+message DeleteShortURLsResponse {
+  string new_jwt_token = 1; // new token after first call of user or after refreshing
+}
+
+message GetFullByIDRequest {
+  string id = 1; // short url id
+}
+
+message GetFullByIDResponse {
+  string full_url = 1; // original url
+  enum Status {
+    OK = 0;
+    DELETED = 1;
+    NOT_FOUND = 2;
+  }
+  Status status = 2;
+}
+
+message GetStatsRequest {
+  string real_ip = 1; // to check trusted subnet
+}
+
+message GetStatsResponse {
+  uint32 urls = 1; // total urls shortened
+  uint32 users = 2; // total users
+}
+
+message GetUserShortURLsResponseItem {
+  string short_url = 1;
+  string original_url = 2;
+}
+
+message GetUserShortURLsRequest {}
+
+message GetUserShortURLsResponse {
+  string new_jwt_token = 1; // new token after first call of user or after refreshing
+  repeated GetUserShortURLsResponseItem urls = 2;
+}
+
+message PingRequest {}
+message PingResponse {}
+
+
+service GoShortenerService {
+  rpc CreateShortURL(CreateShortURLRequest) returns (CreateShortURLResponse);
+  rpc BatchCreateShortURL(BatchCreateShortURLRequest) returns (BatchCreateShortURLResponse);
+  rpc DeleteShortURLs(DeleteShortURLsRequest) returns (DeleteShortURLsResponse);
+  rpc GetFullByID(GetFullByIDRequest) returns (GetFullByIDResponse);
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+  rpc GetUserShortURLs(GetUserShortURLsRequest) returns (GetUserShortURLsResponse);
+  rpc Ping(PingRequest) returns (PingResponse);
+}

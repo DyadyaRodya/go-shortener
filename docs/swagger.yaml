@@ -30,6 +30,13 @@ definitions:
       short_url:
         type: string
     type: object
+  dto.StatsData:
+    properties:
+      urls:
+        type: integer
+      users:
+        type: integer
+    type: object
 info:
   contact: {}
   description: URL Shortener API OpenAPI
@@ -98,6 +105,28 @@ paths:
       summary: Get full URL for short URL
       tags:
       - Info
+  /api/internal/stats:
+    get:
+      description: Get total numbers  of users and shortened URLs
+      parameters:
+      - default: ""
+        description: real ip address from webserver
+        in: header
+        name: X-Real-IP
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.StatsData'
+        "403":
+          description: Forbidden
+      summary: Get total numbers  of users and shortened URLs
+      tags:
+      - Info Internal
   /api/shorten:
     post:
       consumes:

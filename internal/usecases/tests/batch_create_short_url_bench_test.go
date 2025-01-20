@@ -21,7 +21,7 @@ import (
 
 func BenchmarkBatchCreateShortURLsWithDB(b *testing.B) {
 	b.StopTimer()
-	appConfig := config.InitConfigFromCMD(`:8080`, `http://localhost:8080/`, "info", "")
+	appConfig := config.InitConfigFromCMD(`:8080`, `:50051`, `http://localhost:8080/`, "info", "")
 	idGenerator := services.NewIDGenerator()
 
 	lvl, err := zap.ParseAtomicLevel(appConfig.LogLevel)
